@@ -1,0 +1,31 @@
+{
+  "name": "e6studio",
+  "version": "2.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.e6studio.app",
+    "productName": "E6 Studio",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "nikito2223",
+        "repo": "E6Studio"
+      }
+    ]
+  },
+  "keywords": [],
+  "author": "Rufik",
+  "license": "Premium Access",
+  "type": "commonjs",
+  "devDependencies": {
+    "electron": "^37.0.0",
+    "electron-builder": "^26.0.12",
+    "electron-updater": "^6.6.2"
+  }
+}

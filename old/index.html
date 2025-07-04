@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>e6 studio</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Новая вертикальная панель функций -->
+    <nav class="functionbar">
+      <button title="Настройки" id="open-settings">⚙️</button>
+      <button title="Аварийный выко" id="non-stop">S</button>
+    </nav>
+
+
+    <!-- Левая боковая панель -->
+    <aside class="sidebar">
+      <h2>Теги</h2>
+      <input type="text" placeholder="Поиск..." />
+      <ul id="tagList">
+        <li>#ecchi</li>
+        <li>#loli</li>
+        <li>#futa</li>
+        <li>#bondage</li>
+      </ul>
+    </aside>
+
+    <!-- Верхняя панель -->
+    <header class="topbar">
+      <div class="logo"> E6 Studio</div>
+      <div class="menu">
+        <button>Популярное</button>
+        <button>Новое</button>
+        <button>Настройки</button>
+      </div>
+    </header>
+
+    <!-- Галерея -->
+    <div class="gallery-wrapper">
+      <main class="gallery" id="gallery">
+      </main>
+    </div>
+
+    <!-- Панель настроек -->
+    <!-- Тень + Настройки -->
+    <div id="settings-overlay" class="overlay hidden">
+      <div class="settings">
+        <div class="settings-left">
+          <button data-tab="about">О приложении</button>
+          <button data-tab="theme">Темы</button>
+        </div>
+        <div class="settings-right" id="settings-content">
+          <p>Выберите раздел настроек слева</p>
+        </div>
+        <button class="settings-close" id="close-settings">✖</button>
+      </div>
+    </div>
+    <footer class="site-footer">
+      <p>⚠️ Этот сайт содержит материалы 18+</p>
+      <p><a href="#">Политика конфиденциальности</a> | <a href="#">Условия использования</a></p>
+    </footer>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+
+</html>
