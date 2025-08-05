@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>E6 Studio</title>
+  <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body class="dark-theme">
+  <div id="app">
+    <!-- Левая вертикальная панель функций -->
+    <nav class="functionbar">
+      <button title="Настройки" id="open-settings">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+          <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
+        </svg>
+      </button>
+      <button title="Аварийный выход" id="non-stop">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+          <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+        </svg>
+      </button>
+      <button title="Режим инкогнито" id="incognito-mode">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/>
+          <path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/>
+          <path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/>
+        </svg>
+      </button>
+    </nav>
+
+    <!-- Левая боковая панель -->
+    <aside class="sidebar">
+      <h2>Популярные теги</h2>
+      <input type="text" placeholder="Поиск тегов..." id="searchInput" />
+      <ul id="tagList">
+        <li class="active">ahegao<span class="tag-count">42K</span></li>
+        <li>big breasts<span class="tag-count">38K</span></li>
+        <li>blowjob<span class="tag-count">35K</span></li>
+        <li>bondage<span class="tag-count">28K</span></li>
+        <li>schoolgirl<span class="tag-count">26K</span></li>
+        <li>anal<span class="tag-count">24K</span></li>
+        <li>cosplay<span class="tag-count">22K</span></li>
+        <li>futanari<span class="tag-count">20K</span></li>
+      </ul>
+      
+      <h2>Фильтры</h2>
+      <ul>
+        <li>Рейтинг: Safe</li>
+        <li>Рейтинг: Questionable</li>
+        <li class="active">Рейтинг: Explicit</li>
+        <li>Тип: Изображения</li>
+        <li>Тип: Анимации</li>
+        <li>Тип: Видео</li>
+      </ul>
+      
+      <h2>Коллекции</h2>
+      <ul>
+        <li>Избранное ★</li>
+        <li>История просмотров</li>
+        <li>Черный список</li>
+        <li>Лучшее за месяц</li>
+      </ul>
+    </aside>
+
+    <!-- Верхняя панель -->
+    <header class="topbar">
+      <div class="logo">E6 Studio</div>
+      <div class="menu">
+        <button class="active">Популярное</button>
+        <button>Новое</button>
+        <button>Избранное</button>
+        <button>История</button>
+        
+        <div class="mode-switch">
+          <div class="mode-btn active">Все</div>
+          <div class="mode-btn">Изображения</div>
+          <div class="mode-btn">Анимации</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Галерея -->
+    <div class="gallery-wrapper">
+      <div class="gallery-controls">
+        <div class="sort-options">
+          <select>
+            <option>Сортировка: По рейтингу</option>
+            <option>Сортировка: По дате</option>
+            <option>Сортировка: По популярности</option>
+          </select>
+        </div>
+        <div class="view-toggle">
+          <button class="view-btn active" data-view="grid">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zM2.5 2a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zM1 10.5A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>
+            </svg>
+          </button>
+          <button class="view-btn" data-view="list">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      
+      <main class="gallery" id="gallery">
+        <!-- Карточки будут добавляться через JavaScript -->
+        
+        <div class="skeleton">
+          <div class="skeleton-img"></div>
+          <div class="skeleton-title"></div>
+        </div>
+        <div class="skeleton">
+          <div class="skeleton-img"></div>
+          <div class="skeleton-title"></div>
+        </div>
+        <div class="skeleton">
+          <div class="skeleton-img"></div>
+          <div class="skeleton-title"></div>
+        </div>
+        <div class="skeleton">
+          <div class="skeleton-img"></div>
+          <div class="skeleton-title"></div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Панель настроек -->
+    <div id="settings-overlay" class="overlay">
+      <div class="settings">
+        <div class="settings-left">
+          <button class="active" data-tab="about">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+            </svg>
+            О приложении
+          </button>
+          <button data-tab="theme">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+            </svg>
+            Темы
+          </button>
+          <button data-tab="privacy">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
+            </svg>
+            Конфиденциальность
+          </button>
+          <button data-tab="content">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm11.666 1.89c.682 0 1.139.47 1.187 1.107H14v-.11c-.053-1.187-1.024-2-2.342-2-1.604 0-2.518 1.05-2.518 2.751v.747c0 1.7.905 2.73 2.518 2.73 1.314 0 2.285-.792 2.342-1.939v-.114h-1.147c-.048.615-.497 1.05-1.187 1.05-.839 0-1.318-.62-1.318-1.727v-.742c0-1.112.48-1.754 1.318-1.754zm-6.188.926h.044L6.542 11h1.006L9 5.001H7.818l-.82 5.355h-.056L5.97 5.001h-.94l-.832 5.355h-.053l-.827-5.355H2L3.452 11h1.005l1.02-4.184z"/>
+            </svg>
+            Фильтры контента
+          </button>
+          <button data-tab="update">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm11.666 1.89c.682 0 1.139.47 1.187 1.107H14v-.11c-.053-1.187-1.024-2-2.342-2-1.604 0-2.518 1.05-2.518 2.751v.747c0 1.7.905 2.73 2.518 2.73 1.314 0 2.285-.792 2.342-1.939v-.114h-1.147c-.048.615-.497 1.05-1.187 1.05-.839 0-1.318-.62-1.318-1.727v-.742c0-1.112.48-1.754 1.318-1.754zm-6.188.926h.044L6.542 11h1.006L9 5.001H7.818l-.82 5.355h-.056L5.97 5.001h-.94l-.832 5.355h-.053l-.827-5.355H2L3.452 11h1.005l1.02-4.184z"/>
+            </svg>
+            Приложения и Обновления
+          </button>
+        </div>
+        <div class="settings-right" id="settings-content">
+
+          <div class="settings-section active" id="about">
+            <h3>О приложении</h3>
+            <p>E6 Studio — премиум галерея для ценителей аниме-арта с передовыми инструментами фильтрации и управления контентом.</p>
+            <p><strong>Версия:</strong> <span id="app-version"></span></p>
+            <p><strong>Разработчик:</strong> <span id="app-author"></span></p>
+            <p><strong>Лицензия:</strong> <span id="app-license"></span></p>
+            <div style="margin-top: 20px; padding: 15px; background: var(--bg-card); border-radius: 10px;">
+              <p><strong>Что нового в версии <span id="app-version-new"></span>:</strong></p>
+              <ul id="changelog" style="margin: 10px 0 10px 20px;">
+              </ul>
+            </div>
+          </div>
+          
+          <div class="settings-section" id="theme">
+            <h3>Темы оформления</h3>
+            <p>Выберите внешний вид приложения:</p>
+            <div class="theme-options">
+              <div class="theme-btn active" data-theme="dark">
+                <div class="theme-preview">
+                  <div class="preview-sidebar"></div>
+                  <div class="preview-main"></div>
+                  <div class="preview-accent"></div>
+                </div>
+                <span>Тёмная</span>
+              </div>
+              
+              <div class="theme-btn" data-theme="light">
+                <div class="theme-preview">
+                  <div class="preview-sidebar"></div>
+                  <div class="preview-main"></div>
+                  <div class="preview-accent"></div>
+                </div>
+                <span>Светлая</span>
+              </div>
+              
+              <div class="theme-btn" data-theme="blue">
+                <div class="theme-preview">
+                  <div class="preview-sidebar"></div>
+                  <div class="preview-main"></div>
+                  <div class="preview-accent"></div>
+                </div>
+                <span>Синяя</span>
+              </div>
+              
+              <div class="theme-btn" data-theme="purple">
+                <div class="theme-preview">
+                  <div class="preview-sidebar"></div>
+                  <div class="preview-main"></div>
+                  <div class="preview-accent"></div>
+                </div>
+                <span>Фиолетовая</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="settings-section" id="privacy">
+            <h3>Конфиденциальность</h3>
+            <p>Настройки приватности и безопасности:</p>
+            
+            <div style="margin-top: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--bg-card); border-radius: 10px; margin-bottom: 10px;">
+                <div>
+                  <strong>Режим инкогнито</strong>
+                  <p style="margin-top: 5px; font-size: 0.9em;">Не сохранять историю просмотров</p>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="incognito-toggle">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--bg-card); border-radius: 10px; margin-bottom: 10px;">
+                <div>
+                  <strong>Автоочистка кэша</strong>
+                  <p style="margin-top: 5px; font-size: 0.9em;">Удалять кэш при выходе</p>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+              
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--bg-card); border-radius: 10px;">
+                <div>
+                  <strong>Пароль на приложение</strong>
+                  <p style="margin-top: 5px; font-size: 0.9em;">Защита паролем при запуске</p>
+                </div>
+                <label class="switch">
+                  <input type="checkbox">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+          
+          <div class="settings-section" id="content">
+            <h3>Фильтры контента</h3>
+            <p>Настройка отображаемого контента:</p>
+            
+            <div style="margin-top: 20px;">
+              <div style="margin-bottom: 20px;">
+                <label><strong>Максимальный рейтинг:</strong></label>
+                <select style="display: block; width: 100%; padding: 10px; margin-top: 8px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary);">
+                  <option>Safe</option>
+                  <option>Questionable</option>
+                  <option selected>Explicit</option>
+                </select>
+              </div>
+              
+              <div style="margin-bottom: 20px;">
+                <label><strong>Черный список тегов:</strong></label>
+                <div style="display: flex; margin-top: 8px;">
+                  <input type="text" placeholder="Добавить тег..." style="flex: 1; padding: 10px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px 0 0 8px; color: var(--text-primary);">
+                  <button style="padding: 10px 15px; background: var(--accent); color: white; border: none; border-radius: 0 8px 8px 0; cursor: pointer;">+</button>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
+                  <span style="background: var(--bg-hover); padding: 5px 10px; border-radius: 20px; font-size: 0.9rem;">guro</span>
+                  <span style="background: var(--bg-hover); padding: 5px 10px; border-radius: 20px; font-size: 0.9rem;">scat</span>
+                </div>
+              </div>
+              
+              <div style="margin-bottom: 20px;">
+                <label><strong>Предпочитаемые типы контента:</strong></label>
+                <div style="display: flex; gap: 10px; margin-top: 8px;">
+                  <label style="display: flex; align-items: center; gap: 5px;">
+                    <input type="checkbox" checked> Изображения
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 5px;">
+                    <input type="checkbox" checked> Анимации
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 5px;">
+                    <input type="checkbox"> Видео
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section" id="update">  
+            <h3>Приложения и обновления</h3>
+            <p>Настройки обновления</p>
+
+            <div style="margin-top: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var( --bg-card); border-radius: 10px; margin-bottom: 10px;">
+              <div>
+                <strong>Авто Обновления</strong>
+                <p style="margin-top: 5px; font-size: 0.9em;">Автомотически обновляет приложения</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="toggle">
+                <span class="slider"></span>
+              </label>
+              </div>
+            </div>
+
+            <div class="update-container">
+              <button id="check-update" class="update-button">
+                <span class="button-icon">🔄</span>
+                Проверить обновления
+              </button>
+              <div id="update-status" class="status-container">
+                <div class="status-icon">⏳</div>
+                <p class="status-text">Готов к проверке</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <button class="settings-close" id="close-settings">
+          <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <footer class="site-footer">
+      <p>⚠️ Этот сайт содержит материалы для взрослых (18+)</p>
+      <p><a href="#">Политика конфиденциальности</a> | <a href="#">Условия использования</a> | <a href="#">Помощь</a></p>
+    </footer>
+  </div>
+
+  <!-- Переключатель тем -->
+  <div class="theme-switcher" id="theme-switcher">
+    <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+    </svg>
+  </div>
+  <script type="module" src="src/renderer.js"></script>
+</body>
+</html>
