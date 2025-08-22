@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { loadPlugins } = require("./src/plugins/loadPlugins");
 
 // Загружаем package.json
 const packagePath = path.join(__dirname, 'package.json');
@@ -22,4 +23,19 @@ contextBridge.exposeInMainWorld('appInfo', {
     author: packageData.author,
     license: packageData.license,
   }),
+});
+
+
+contextBridge.exposeInMainWorld("pluginAPI", {
+    getLocalPlugins: () => ipcRenderer.invoke("get-local-plugins"),
+    installPlugin: (pluginInfo) => ipcRenderer.invoke("install-plugin", pluginInfo),
+
+    // Новый API
+    getPluginsEnabled: () => ipcRenderer.invoke("get-plugins-enabled"),
+    setPluginEnabled: (pluginFolder, enabled) => ipcRenderer.invoke("set-plugin-enabled", { pluginFolder, enabled })
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+    // Передаем контекст окна (renderer) в loadPlugins
+    loadPlugins(window);
 });

@@ -1,41 +1,51 @@
 export function initThemeSwitcher() {
-  const themeButtons = document.querySelectorAll('.theme-btn');
-  const themeSwitcher = document.getElementById('theme-switcher');
+  const themes = [
+    { id: 'dark', name: 'Тёмная', accent: "#ff6b8b"},
+    { id: 'light', name: 'Светлая', accent: " #e91e63" },
+    { id: 'blue', name: 'Синяя', accent: "#9c5cff" },
+    { id: 'purple', name: 'Фиолетовая', accent: "#8b5cf6" }
+  ];
 
-  themeButtons.forEach(button => {
-    button.addEventListener('click', function () {
-      const theme = this.getAttribute('data-theme');
+  const themeContainer = document.querySelector('#theme .theme-options');
+  if (!themeContainer) return;
 
-      themeButtons.forEach(btn => btn.classList.remove('active'));
-      this.classList.add('active');
+  // Очистим контейнер на случай перезагрузки
+  themeContainer.innerHTML = '';
 
-      document.body.className = `${theme}-theme`;
-      localStorage.setItem('theme', theme);
-    });
+  themes.forEach(theme => {
+    const btn = document.createElement('div');
+    btn.className = 'theme-btn';
+    btn.setAttribute('data-theme', theme.id);
+    btn.innerHTML = `
+      <div class="theme-preview">
+        <div class="preview-sidebar"></div>
+        <div class="preview-main"></div>
+        <div class="preview-accent" style="background: ${theme.accent};"></div>
+      </div>
+      <span>${theme.name}</span>
+    `;
+    themeContainer.appendChild(btn);
   });
 
-  themeSwitcher.addEventListener('click', () => {
-    const themes = ['dark', 'light', 'blue', 'purple'];
-    const currentTheme = document.body.className.replace('-theme', '');
-    const nextTheme = themes[(themes.indexOf(currentTheme) + 1) % themes.length];
+  const themeButtons = themeContainer.querySelectorAll('.theme-btn');
 
-    document.body.className = `${nextTheme}-theme`;
-    localStorage.setItem('theme', nextTheme);
+  function applyTheme(theme) {
+    document.body.className = `${theme}-theme`;
+    localStorage.setItem('theme', theme);
 
     themeButtons.forEach(btn => {
-      btn.classList.remove('active');
-      if (btn.getAttribute('data-theme') === nextTheme) {
-        btn.classList.add('active');
-      }
+      btn.classList.toggle('active', btn.getAttribute('data-theme') === theme);
+    });
+  }
+
+  themeButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const theme = button.getAttribute('data-theme');
+      applyTheme(theme);
     });
   });
 
+  // Подгружаем сохранённую тему
   const savedTheme = localStorage.getItem('theme') || 'dark';
-  document.body.className = `${savedTheme}-theme`;
-
-  themeButtons.forEach(btn => {
-    if (btn.getAttribute('data-theme') === savedTheme) {
-      btn.classList.add('active');
-    }
-  });
+  applyTheme(savedTheme);
 }

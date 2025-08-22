@@ -1,10 +1,18 @@
-const checkBtn = document.getElementById('check-update');
-const updateStatus = document.getElementById('update-status');
-const statusText = updateStatus.querySelector('.status-text');
+
+/**
+ * Обновления приложения
+* */
 
 export function initUpdate() {
+    const checkBtn = document.getElementById('check-update');
+    const updateStatus = document.getElementById('update-status');
+
+    // если элементов нет → просто выходим, чтобы не крашило
+    if (!checkBtn || !updateStatus) return;
+
+    const statusText = updateStatus.querySelector('.status-text');
+
     checkBtn.addEventListener('click', () => {
-        // Устанавливаем состояние загрузки
         checkBtn.classList.add('loading');
         updateStatus.className = 'status-container checking';
         statusText.textContent = 'Проверяем обновления...';
@@ -28,5 +36,4 @@ export function initUpdate() {
         statusText.textContent = `❌ Ошибка проверки обновлений: ${err}`;
         checkBtn.classList.remove('loading');
     });
-
 }
