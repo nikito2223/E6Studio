@@ -26,7 +26,7 @@
   },
   "keywords": [],
   "author": "Rufik",
-  "license": "Premium Access",
+  "license": "MIT",
   "type": "commonjs",
   "devDependencies": {
     "electron": "^37.0.0",
