@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <title>E6 Studio</title>
   <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="stylesheet" href="public\styles\style-settings.css">
+  <link rel="stylesheet" href="public\styles\style-gallery.css">
 </head>
 <body class="dark-theme">
   <div id="app">
@@ -28,11 +30,13 @@
           <path d="M3 12H5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
       </button>
+      <button title="Мессанжер" id="messanger">
+        <svg width="64px" height="64px" viewBox="-2.5 -2.5 30.00 30.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#ffffff" transform="matrix(1, 0, 0, 1, 0, 0)rotate(0)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path fill-rule="evenodd" clip-rule="evenodd" d="M12.5 18.0044C16.226 18.1372 19.3568 15.23 19.5 11.5044C19.3568 7.77878 16.226 4.87154 12.5 5.00438C8.77403 4.87154 5.64315 7.77878 5.5 11.5044C5.51666 13.4739 6.45114 15.3229 8.027 16.5044L8 19.5044L11 17.8544C11.4937 17.9543 11.9962 18.0046 12.5 18.0044Z" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M16 10.0044L13.5 12.5044L11.5 10.5044L9 13.0044" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
+      </button>
     </nav>
 
     <!-- Левая боковая панель -->
     <aside class="sidebar">
-      <h2>Популярные теги</h2>
       <input type="text" placeholder="Поиск тегов..." id="searchInput" />
 
       <h2>Теги</h2>
@@ -152,7 +156,7 @@
     </div>
 
     <!-- Галерея -->
-    <div class="gallery-wrapper">
+    <div class="gallery-wrapper ">
 
 
       <main class="gallery" id="gallery">
@@ -177,6 +181,24 @@
       </main>
     </div>
 
+    <div class="plugins-contents hidden">
+      <!-- Левая панель -->
+      <div class="plugins-sidebar">
+        <h2>Плагины</h2>
+        <ul id="plugins-list">
+        </ul>
+      </div>
+    
+      <!-- Правая панель -->
+      <div class="plugins-main">
+        <h2>Настройки</h2>
+        <div class="plugin-settings">
+          <p>Выберите плагин слева, чтобы увидеть его настройки.</p>
+    
+        </div>
+      </div>
+    </div>
+
 
     <!-- Панель настроек -->
     <div id="settings-overlay" class="overlay">
@@ -196,6 +218,5 @@
 
 
   <script type="module" src="src/renderer.js"></script>
-
 </body>
 </html>

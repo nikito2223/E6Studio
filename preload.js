@@ -39,3 +39,28 @@ window.addEventListener('DOMContentLoaded', () => {
     // Передаем контекст окна (renderer) в loadPlugins
     loadPlugins(window);
 });
+
+contextBridge.exposeInMainWorld("AccountApi", {
+  register: async (email, password) => {
+    const res = await fetch("http://localhost:3000/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+    return res.json();
+  },
+  login: async (email, password) => {
+    const res = await fetch("http://localhost:3000/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+    return res.json();
+  },
+  getMe: async () => {
+    const res = await fetch("http://localhost:3000/me", {
+      credentials: "include"
+    });
+    return res.json();
+  }
+});

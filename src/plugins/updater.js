@@ -5,6 +5,7 @@ const RELEASE_API = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest
  * Получает данные последнего релиза с GitHub
  * @returns {Promise<{ version: string, changelog: string[], published_at: string }>}
  */
+
 export async function checkForUpdates() {
   try {
     const res = await fetch(RELEASE_API);
