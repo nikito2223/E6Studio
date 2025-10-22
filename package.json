@@ -1,8 +1,9 @@
 {
   "name": "e6studio",
-  "version": "2.3.5",
+  "version": "2.4.0",
   "description": "none",
   "main": "main.js",
+  "description": "",
   "scripts": {
     "start": "electron .",
     "pack": "electron-builder --dir",
@@ -22,10 +23,31 @@
     "files": [
       "**/*",
       "preload.js"
-    ]
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Utility"
+    }
   },
   "keywords": [],
-  "author": "Rufik",
+  "author": {
+    "name": "Rufik",
+    "email": "mmkzmkzkz81@gmail.com"
+  },
   "license": "MIT",
   "type": "commonjs",
   "devDependencies": {

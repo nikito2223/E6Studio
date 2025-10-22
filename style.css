@@ -47,7 +47,7 @@ body.light-theme {
   --bg-secondary: #ffffff;
   --bg-hover: #f1f5f9;
   --bg-card: #dfdfdf;
-  --bg-footer: #f8fafc;
+  --bg-footer: #cfcfcf;
   --bg-grad-end: #eef3f7; 
 
   --text-primary: #0b1b26; /* насыщенный тёмно-сланцевый — читабельно и мягко */
@@ -187,7 +187,7 @@ body.red-theme {
       flex-direction: column;
       align-items: center;
       padding-top: 20px;
-      z-index: 100;
+      z-index: 5;
       box-shadow: var(--shadow-md);
       border-right: 1px solid var(--border-color);
     }

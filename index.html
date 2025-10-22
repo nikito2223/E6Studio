@@ -3,202 +3,132 @@
 <head>
   <meta charset="UTF-8" />
   <title>E6 Studio</title>
+
   <link rel="stylesheet" type="text/css" href="style.css">
-  <link rel="stylesheet" href="public\styles\style-settings.css">
-  <link rel="stylesheet" href="public\styles\style-gallery.css">
+  <link rel="stylesheet" href="assets/styles/style-settings.css">
+  <link rel="stylesheet" href="assets/styles/style-gallery.css">
+  <link rel="stylesheet" href="assets/styles/style-card.css">
+  <link rel="stylesheet" href="assets/styles/style-viewer.css">
+  <link rel="stylesheet" href="assets/styles/style-footer.css">
 </head>
 <body class="dark-theme">
   <div id="app">
+
     <!-- Левая вертикальная панель функций -->
     <nav class="functionbar">
-      <button title="Настройки" id="open-settings">
+      <button title="Настройки" id="open-settings" data-i18n-title="settings.sidebar.settings">
         <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
-          <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
+          <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z" />
+          <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z" />
         </svg>
       </button>
-      <button title="Режим инкогнито" id="incognito-mode">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M15.5 12C15.5 13.933 13.933 15.5 12 15.5C10.067 15.5 8.5 13.933 8.5 12C8.5 10.067 10.067 8.5 12 8.5C13.933 8.5 15.5 10.067 15.5 12Z" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M12 5V3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M12 21V19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M18.364 5.63604L16.95 7.05005" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M7.05005 16.95L5.63604 18.364" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M5.63604 5.63604L7.05005 7.05005" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M16.95 16.95L18.364 18.364" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M19 12H21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M3 12H5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+
+      <button title="Режим инкогнито" id="incognito-mode" i18n-title="settings.sidebar.incognito">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M15.5 12C15.5 13.933 13.933 15.5 12 15.5C10.067 15.5 8.5 13.933 8.5 12C8.5 10.067 10.067 8.5 12 8.5C13.933 8.5 15.5 10.067 15.5 12Z" stroke="currentColor" stroke-width="1.5" />
+          <path d="M12 5V3M12 21V19M18.364 5.63604L16.95 7.05005M7.05005 16.95L5.63604 18.364M5.63604 5.63604L7.05005 7.05005M16.95 16.95L18.364 18.364M19 12H21M3 12H5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
         </svg>
-      </button>
-      <button title="Мессанжер" id="messanger">
-        <svg width="64px" height="64px" viewBox="-2.5 -2.5 30.00 30.00" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#ffffff" transform="matrix(1, 0, 0, 1, 0, 0)rotate(0)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path fill-rule="evenodd" clip-rule="evenodd" d="M12.5 18.0044C16.226 18.1372 19.3568 15.23 19.5 11.5044C19.3568 7.77878 16.226 4.87154 12.5 5.00438C8.77403 4.87154 5.64315 7.77878 5.5 11.5044C5.51666 13.4739 6.45114 15.3229 8.027 16.5044L8 19.5044L11 17.8544C11.4937 17.9543 11.9962 18.0046 12.5 18.0044Z" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M16 10.0044L13.5 12.5044L11.5 10.5044L9 13.0044" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
       </button>
     </nav>
 
     <!-- Левая боковая панель -->
     <aside class="sidebar">
-      <input type="text" placeholder="Поиск тегов..." id="searchInput" />
+      <input type="text" placeholder="Поиск тегов..." id="searchInput" data-i18n-placeholder="sidebar.searchTags" />
 
-      <h2>Теги</h2>
+      <h2 data-i18n="sidebar.tags">Теги</h2>
       <ul id="tagList"></ul>
-      
-      <h2>Фильтры</h2>
+
+      <h2 data-i18n="sidebar.filters">Фильтры</h2>
       <ul id="filterList"></ul>
-      
-      <h2>Коллекции</h2>
+
+      <h2 data-i18n="sidebar.collections">Коллекции</h2>
       <ul id="collectionList"></ul>
     </aside>
 
     <!-- Верхняя панель -->
     <header class="topbar">
-      <div class="logo">E6 Studio</div>
+      <div class="logo" data-i18n="header.logo">E6 Studio</div>
       <div class="menu">
-        <button class="menu-btn active" data-tab="popular">Популярное</button>
-        <button class="menu-btn" data-tab="new">Новое</button>
-        <button class="menu-btn" data-tab="favorites">Избранное</button>
-        <button class="menu-btn" data-tab="history">История</button>
+        <button class="menu-btn active" data-tab="popular" data-i18n="header.popular">Популярное</button>
+        <button class="menu-btn" data-tab="new" data-i18n="header.new">Новое</button>
+        <button class="menu-btn" data-tab="favorites" data-i18n="header.favorites">Избранное</button>
+        <button class="menu-btn" data-tab="history" data-i18n="header.history">История</button>
       </div>
     </header>
 
+    <!-- Просмотр карточки -->
     <div class="card-active hidden">
       <div class="viewer">
-            <!-- Основная область -->
-            <div class="viewer-body">
-                <div class="image-section">
-                    <img src="https://images.unsplash.com/photo-1465101162946-4377e57745c3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80" alt="image" class="viewer-image">
-                </div>
-                
-                <div class="info-section">
-                    <p class="image-description">
-                        Фантастический космический пейзаж с туманностями и далёкими звёздами. 
-                        Это изображение было создано цифровым художником с использованием современных технологий.
-                    </p>
+        <div class="viewer-body">
+          <div class="image-section">
+            <img src="https://images.unsplash.com/photo-1465101162946-4377e57745c3?auto=format&fit=crop&w=1170&q=80" alt="image" class="viewer-image">
+          </div>
 
-                    <!-- Теги -->
-                    <div class="image-tags">
-                        <span>#космос</span>
-                        <span>#фантастика</span>
-                        <span>#арт</span>
-                        <span>#sci-fi</span>
-                    </div>
-                    
-                    <!-- Статистика -->
-                    <div class="stats-section">
-                        <!-- Лайки / дизлайки -->
-                        <div class="like-section">
-                            <button class="like-btn">
-                            <object type="image/svg+xml" data="public/Svg/like.svg" width="32" height="32"></object>
-                            <span>24</span></button>
-                            <button class="dislike-btn">
-                            <object type="image/svg+xml" data="public/Svg/dislike.svg" width="32" height="32"></object>
-                            <span>3</span></button>
-                        </div>
-                        
-                        <!-- Просмотры -->
-                        <div class="view-count">
-                            <i class="far fa-eye"></i> <span>1.4K</span>
-                        </div>
-                    </div>
+          <div class="info-section" >
+            <p class="image-description" data-i18n="viewer.imageDescription">
+              Фантастический космический пейзаж с туманностями и далёкими звёздами.
+              Это изображение было создано цифровым художником с использованием современных технологий.
+            </p>
 
-                    <!-- Комментарии -->
-                    <div class="comments-section">
-                        <h3><i class="fas fa-comments"></i> Комментарии</h3>
-                        
-                        <div class="comments-container">
-                            <div class="comment">
-                                <strong>Пользователь1</strong>
-                                <div class="comment-text">Очень классная картинка!</div>
-                                <div class="comment-meta">
-                                    <span class="comment-time">2 часа назад</span>
-                                    <div class="comment-actions">
-                                        <button><i class="far fa-heart"></i> 5</button>
-                                        <button><i class="far fa-reply"></i></button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="comment">
-                                <strong>Пользователь2</strong>
-                                <div class="comment-text">Атмосфера супер 👍</div>
-                                <div class="comment-meta">
-                                    <span class="comment-time">5 часов назад</span>
-                                    <div class="comment-actions">
-                                        <button><i class="far fa-heart"></i> 3</button>
-                                        <button><i class="far fa-reply"></i></button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="comment">
-                                <strong>КосмическийХудожник</strong>
-                                <div class="comment-text">Спасибо за ваши комментарии! Рад, что вам нравится.</div>
-                                <div class="comment-meta">
-                                    <span class="comment-time">12 часов назад</span>
-                                    <div class="comment-actions">
-                                        <button><i class="far fa-heart"></i> 12</button>
-                                        <button><i class="far fa-reply"></i></button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Добавить комментарий -->
-                        <div class="add-comment">
-                            <input type="text" placeholder="Напишите комментарий..." />            
-                        </div>
-                    </div>
-                </div>
+            <div class="image-tags">
+              <span>#космос</span>
+              <span>#фантастика</span>
+              <span>#арт</span>
+              <span>#sci-fi</span>
             </div>
+
+            <div class="stats-section">
+              <div class="like-section">
+                <button class="like-btn" data-i18n-title="viewer.like">
+                  <object type="image/svg+xml" data="assets/settings/Svg/like.svg" width="32" height="32"></object>
+                  <span>24</span>
+                </button>
+                <button class="dislike-btn" data-i18n-title="viewer.dislike">
+                  <object type="image/svg+xml" data="assets/settings/Svg/dislike.svg" width="32" height="32"></object>
+                  <span>3</span>
+                </button>
+              </div>
+
+              <div class="view-count">
+                <i class="far fa-eye"></i> <span>${cardInfo.views}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <button class="card-close" id="close-card" style="top: 12vh;"> <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16"> <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/> </svg>
+      <button class="card-close" id="close-card" style="top: 12vh;">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+        </svg>
       </button>
     </div>
 
     <!-- Галерея -->
-    <div class="gallery-wrapper ">
-
-
+    <div class="gallery-wrapper">
       <main class="gallery" id="gallery">
-        <!-- Карточки будут добавляться через JavaScript -->
-
-        <div class="skeleton">
-          <div class="skeleton-img"></div>
-          <div class="skeleton-title"></div>
-        </div>
-        <div class="skeleton">
-          <div class="skeleton-img"></div>
-          <div class="skeleton-title"></div>
-        </div>
-        <div class="skeleton">
-          <div class="skeleton-img"></div>
-          <div class="skeleton-title"></div>
-        </div>
-        <div class="skeleton">
-          <div class="skeleton-img"></div>
-          <div class="skeleton-title"></div>
-        </div>
+        <div class="skeleton"><div class="skeleton-img"></div><div class="skeleton-title"></div></div>
+        <div class="skeleton"><div class="skeleton-img"></div><div class="skeleton-title"></div></div>
+        <div class="skeleton"><div class="skeleton-img"></div><div class="skeleton-title"></div></div>
+        <div class="skeleton"><div class="skeleton-img"></div><div class="skeleton-title"></div></div>
       </main>
+      <div id="pagination" class="pagination"></div>
     </div>
 
+    <!-- Панель плагинов -->
     <div class="plugins-contents hidden">
-      <!-- Левая панель -->
       <div class="plugins-sidebar">
-        <h2>Плагины</h2>
-        <ul id="plugins-list">
-        </ul>
+        <h2 data-i18n="plugins.title">Плагины</h2>
+        <ul id="plugins-list"></ul>
       </div>
-    
-      <!-- Правая панель -->
+
       <div class="plugins-main">
-        <h2>Настройки</h2>
+        <h2 data-i18n="plugins.settings">Настройки</h2>
         <div class="plugin-settings">
-          <p>Выберите плагин слева, чтобы увидеть его настройки.</p>
-    
+          <p data-i18n="plugins.selectPlugin">Выберите плагин слева, чтобы увидеть его настройки.</p>
         </div>
       </div>
     </div>
-
 
     <!-- Панель настроек -->
     <div id="settings-overlay" class="overlay">
@@ -206,16 +136,30 @@
         <div class="settings-left" id="settings-tabs"></div>
         <div class="settings-right" id="settings-content"></div>
       </div>
-      <button class="settings-close" id="close-settings"> <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16"> <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/> </svg>
+      <button class="settings-close" id="close-settings">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+        </svg>
       </button>
     </div>
 
-    <footer class="site-footer">
-      <!-- <p>⚠️ Этот сайт содержит материалы для взрослых (18+)</p> -->
-      <p><a href="#">Политика конфиденциальности</a> | <a href="#">Условия использования</a> | <a href="#">Помощь</a></p>
-    </footer>
-  </div>
+    <!-- Футер -->
+    <div class="site-footer">
+      <a href="#" data-doc="privacy" data-i18n="footer.privacy">Политика конфиденциальности</a> |
+      <a href="#" data-doc="terms" data-i18n="footer.terms">Условия использования</a> |
+      <a href="#" data-doc="help" data-i18n="footer.help">Помощь</a>
+    </div>
 
+    <!-- Модальное окно -->
+    <div class="overlay" id="docOverlay">
+      <div class="settings">
+        <button class="settings-close" id="closeDoc" data-i18n-title="modal.close">&times;</button>
+        <div class="settings-right" id="docContent">
+          <h3 data-i18n="modal.loading">Загрузка...</h3>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="src/renderer.js"></script>
 </body>

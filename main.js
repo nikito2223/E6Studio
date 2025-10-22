@@ -2,11 +2,22 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const { autoUpdater } = require("electron-updater");
 const path = require('path');
 const fs = require("fs");
+const os = require("os");
 const https = require("https");
 const AdmZip = require("adm-zip");
-const { loadPlugins } = require("./src/plugins/loadPlugins");
 
+
+
+const { loadPlugins } = require("./src/plugins/loadPlugins");
 let mainWindow;
+
+const isDev = !app.isPackaged;
+
+if (isDev) {
+  autoUpdater.allowPrerelease = true;   // допускаем pre-release версии
+  autoUpdater.autoDownload = false;     // пока не скачиваем
+  autoUpdater.updateConfigPath = path.join(__dirname, 'dev-app-update.yml'); // можно создать фиктивный конфиг
+}
 
 const pluginsDir = path.join(app.getPath("userData"), "plugins");
 if (!fs.existsSync(pluginsDir)) {
@@ -29,7 +40,6 @@ function createWindow() {
 
 app.whenReady().then(() => {
   createWindow();
-  loadPlugins();
 
   // обработка по кнопке
   ipcMain.on('check-for-updates', () => {
@@ -181,3 +191,20 @@ ipcMain.handle("set-plugin-enabled", (event, { pluginFolder, enabled }) => {
     return { success: true };
 });
 
+function downloadToAppFolder(url, filename) {
+    const appDir = path.dirname(app.getAppPath()); // корень приложения
+    const dir = path.join(appDir, "downloads");
+
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+    const filePath = path.join(dir, filename);
+
+    const file = fs.createWriteStream(filePath);
+    https.get(url, (response) => {
+        response.pipe(file);
+        file.on("finish", () => {
+            file.close();
+            console.log(`Файл сохранён: ${filePath}`);
+        });
+    });
+}

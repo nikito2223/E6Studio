@@ -1,181 +1,46 @@
-import { checkForUpdates } from "../plugins/updater.js";
+import { checkForUpdates } from "../plugins/updateChecker.js";
+import { filterGallery } from './gallery.js'; // путь поправь под свой
+import { applyTranslations, initLanguageSwitcher, translations } from './localization/i18n.js';
 
 const settings = [
-    {
-      name: "theme",
-      title: "Темы",
-      description: `
-        <h3>Темы оформления</h3>
-        <p>Выберите внешний вид приложения:</p>
-        <div class="theme-options">
-        </div>
-      `,
-      icon: `        
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- Солнце/Луна -->
-          <mask id="moon-mask">
-            <rect x="0" y="0" width="24" height="24" fill="white"/>
-            <circle cx="17" cy="7" r="8" fill="black"/>
-          </mask>
-          <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.5" mask="url(#moon-mask)"/>
-          
-          <!-- Лучи солнца -->
-          <g class="sun-rays">
-            <path d="M12 5V3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            <path d="M19 12H21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            <path d="M12 19V21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            <path d="M5 12H3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            <path d="M16.95 7.05L18.36 5.64" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            <path d="M5.64 18.36L7.05 16.95" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            <path d="M7.05 7.05L5.64 5.64" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            <path d="M18.36 18.36L16.95 16.95" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          </g>
-        </svg>`
-    },
-    {
-      name: "plugins",
-      title: "Плагины",
-      description: `
-        <h3>Плагины</h3>
-        <p>Плагины и Модули</p>
-        <button data-tab="github" class="github-button">GitHub</button>
-        <div class="plugins-tab">
-          
-        </div>
-      `,
-      icon: `
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M8 8H16V16H8V8Z" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M12 8V4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M12 20V16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M8 12H4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M20 12H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <circle cx="12" cy="12" r="1" fill="currentColor"/>
-        </svg>
-      `
-    },
-    {
-      name: "github",
-      title: "GitHub",
-      description: `
-        <h3>Поиск плагинов на GitHub</h3>
-        <p>Плагины с тегом <code>E6-Plugin</code>:</p>
-        <div class="github-tab">  
-        </div> 
-      `,
-      icon: `<svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12c0 4.4 2.9 8.2 6.9 9.5.5.1.6-.2.6-.5v-1.7c-2.8.6-3.4-1.2-3.4-1.2-.5-1.1-1.2-1.4-1.2-1.4-1-.7.1-.7.1-.7 1.1.1 1.7 1.2 1.7 1.2 1 .1.8-1.4 2.9-1.4 2.1 0 1.9 1.5 2.9 1.4 0 0 .6-1.1 1.7-1.2 0 0 1.1 0 .1.7 0 0-.7.3-1.2 1.4 0 0-.6 1.8-3.4 1.2v1.7c0 .3.1.6.6.5C19.1 20.2 22 16.4 22 12c0-5.5-4.5-10-10-10z" fill="currentColor"/></svg>`
-    },
-    {
-      name: "content",
-      title: "Контент",
-      description: `
-        <h3>Фильтры контента</h3>
-        <p>Настройка отображаемого контента:</p>
-        
-        <div style="margin-top: 20px;">
-          <div style="margin-bottom: 20px;">
-            <label><strong>Максимальный рейтинг:</strong></label>
-            <select style="display: block; width: 100%; padding: 10px; margin-top: 8px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary);">
-              <option>Safe</option>
-              <option>Questionable</option>
-              <option selected>Explicit</option>
-            </select>
-          </div>
-          
-          <div style="margin-bottom: 20px;">
-            <label><strong>Черный список тегов:</strong></label>
-            <div style="display: flex; margin-top: 8px;">
-              <input type="text" placeholder="Добавить тег..." style="flex: 1; padding: 10px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px 0 0 8px; color: var(--text-primary);">
-              <button style="padding: 10px 15px; background: var(--accent); color: white; border: none; border-radius: 0 8px 8px 0; cursor: pointer;">+</button>
-            </div>
-            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
-              <span style="background: var(--bg-hover); padding: 5px 10px; border-radius: 20px; font-size: 0.9rem;">guro</span>
-              <span style="background: var(--bg-hover); padding: 5px 10px; border-radius: 20px; font-size: 0.9rem;">scat</span>
-            </div>
-          </div>
-        </div>
-        <p>Настройки приватности и безопасности:</p>
-        
-        <div style="margin-top: 20px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--bg-card); border-radius: 10px; margin-bottom: 10px;">
-            <div>
-              <strong>Режим инкогнито</strong>
-              <p style="margin-top: 5px; font-size: 0.9em;">Не сохранять историю просмотров</p>
-            </div>
-            <label class="switch">
-              <input type="checkbox" id="incognito-toggle">
-              <span class="slider"></span>
-            </label>
-          </div>
-          
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--bg-card); border-radius: 10px; margin-bottom: 10px;">
-            <div>
-              <strong>Автоочистка кэша</strong>
-              <p style="margin-top: 5px; font-size: 0.9em;">Удалять кэш при выходе</p>
-            </div>
-            <label class="switch">
-              <input type="checkbox" checked>
-              <span class="slider"></span>
-            </label>
-          </div>
-          
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--bg-card); border-radius: 10px;">
-            <div>
-              <strong>Пароль на приложение</strong>
-              <p style="margin-top: 5px; font-size: 0.9em;">Защита паролем при запуске</p>
-            </div>
-            <label class="switch">
-              <input type="checkbox">
-              <span class="slider"></span>
-            </label>
-          </div>
-        </div>
-      `,
-      icon: `
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 6H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M7 12H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M10 18H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <circle class="filter-dot" cx="5" cy="6" r="1" fill="currentColor"/>
-          <circle class="filter-dot" cx="12" cy="12" r="1" fill="currentColor"/>
-          <circle class="filter-dot" cx="19" cy="18" r="1" fill="currentColor"/>
-          <path d="M15 9L18 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-       `
-    },
-    {
-      name: "about",
-      title: "О приложении",
-      description: `
-        <h3>Приложения</h3>
-        <p class="description">E6 Studio – это удобный лаунчер для E621, созданный для быстрого и комфортного доступа к популярной анимационной арт-платформе.</p>
-        <p><strong>Версия:</strong> <span id="app-version"></span></p>
-        <p><strong>Разработчик:</strong> <span id="app-author"></span></p>
-        <p><strong>Лицензия:</strong> <span id="app-license"></span></p>
-        <div style="margin-top: 20px; padding: 15px; background: var(--bg-card); border-radius: 10px;">
-          <p><strong>Что нового в версии <span id="app-version-new"></span>:</strong></p>
-          <ul id="changelog" style="margin: 10px 0 10px 20px;">
-          </ul>
-        </div>
-
-        <div class="update-container">
-          <button id="check-update" class="update-button">
-            <span class="button-icon">🔄</span>
-            Проверить обновления
-          </button>
-          <div id="update-status" class="status-container">
-            <div class="status-icon">⏳</div>
-            <p class="status-text">Готов к проверке</p>
-          </div>
-        </div>
-      `,
-      icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/>
-              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M12 8V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>`
-    },
+  {
+    name: "theme",
+    title: "settings.theme.title", // ключ для перевода
+    icon: "theme.svg",
+    html: "assets/settings/theme.html"
+  },
+  {
+    name: "plugins",
+    title: "settings.plugins.title",
+    icon: "plugins.svg",
+    html: "assets/settings/plugins.html"
+  },
+  {
+    name: "github",
+    title: "settings.github.title",
+    icon: "github.svg",
+    html: "assets/settings/github.html"
+  },
+  {
+    name: "content",
+    title: "settings.content.title",
+    icon: "content.svg",
+    html: "assets/settings/content.html"
+  },
+  {
+    name: "languages",
+    title: "settings.languages.title",
+    icon: "content.svg",
+    html: "assets/settings/languages.html"
+  },
+  {
+    name: "about",
+    title: "settings.about.title",
+    icon: "about.svg",
+    html: "assets/settings/about.html"
+  }
 ];
+
 
 export async function initSettings() {
   init();
@@ -189,22 +54,213 @@ function init(){
   initViewModes();
   initThemeSwitcher();
   initIncognitoMode();
+  // Инициализация
+  initPasswordProtection();
+}
+
+async function loadSettingHTML(section, path) {
+  try {
+    const res = await fetch(path);
+    const html = await res.text();
+    section.innerHTML = html;
+    applyTranslations(section);
+  } catch (err) {
+    section.innerHTML = `<p style="color:red;">Ошибка загрузки: ${err}</p>`;
+  }
+}
+
+function initContentModes(container = document) {
+  const maxRating = container.querySelector('#maxRatingSelect');
+  if (!maxRating) return;
+
+  const savedRating = localStorage.getItem('maxRating') || 'e';
+  maxRating.value = savedRating;
+
+  maxRating.addEventListener('change', () => {
+    localStorage.setItem('maxRating', maxRating.value);
+    filterGallery();
+  });
+
+  initBlacklistTags(container);
 }
 
 
-function initContentModes() {
-  const modeButtons = document.querySelectorAll('.mode-btn');
 
-  modeButtons.forEach(button => {
-    button.addEventListener('click', function () {
-      modeButtons.forEach(btn => btn.classList.remove('active'));
-      this.classList.add('active');
-    });
+function initPasswordProtection() {
+  const toggle = document.getElementById('app-password-toggle');
+  const container = document.getElementById('password-input-container');
+  const input = document.getElementById('app-password-input');
+
+  if (!toggle && !input && !container) return; 
+  
+  // Загрузка сохранённого пароля
+  const savedPassword = localStorage.getItem('appPassword');
+  if (savedPassword) {
+    toggle.checked = true;
+    container.classList.remove('hidden');
+    input.value = savedPassword; 
+    requestPassword(savedPassword);
+  }
+
+  // Переключение включения/отключения пароля
+  toggle.addEventListener('change', () => {
+    container.classList.toggle('hidden', !toggle.checked);
+    if (!toggle.checked) {
+      localStorage.removeItem('appPassword');
+      input.value = '';
+    }
+  });
+
+  // Сохранение пароля при вводе
+  input.addEventListener('input', () => {
+    const val = input.value.trim();
+    if (val.length === 5) {
+      localStorage.setItem('appPassword', val);
+    } else {
+      localStorage.removeItem('appPassword');
+    }
   });
 }
+
+
+// Функция запроса пароля при старте
+function requestPassword(correctPassword) {
+  const overlay = document.createElement('div');
+  overlay.classList.add('password-overlay');
+
+  overlay.innerHTML = `
+    <div class="password-modal">
+      <h3>Введите пароль</h3>
+      <input type="password" id="password-prompt-input" class="password-input" placeholder="Пароль">
+      <p class="password-error" id="password-error" style="display:none;">Пароль должен быть минимум 5 символов</p>
+      <button class="update-button" id="password-submit">🔒 Войти</button>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const inputPrompt = overlay.querySelector('#password-prompt-input');
+  const submit = overlay.querySelector('#password-submit');
+  const error = overlay.querySelector('#password-error');
+
+  function checkPassword() {
+    const val = inputPrompt.value.trim();
+    if (val.length < 5) {
+      error.textContent = 'Пароль должен быть минимум 5 символов';
+      error.style.display = 'block';
+      return;
+    }
+
+    if (val === correctPassword) {
+      overlay.remove(); // снимаем блокировку
+    } else {
+      error.textContent = 'Неверный пароль';
+      error.style.display = 'block';
+    }
+  }
+
+  submit.addEventListener('click', checkPassword);
+  inputPrompt.addEventListener('keydown', e => { if (e.key === 'Enter') checkPassword(); });
+}
+
+
+
+
+function showPasswordPrompt(correctPassword) {
+  const overlay = document.createElement('div');
+  overlay.classList.add('password-overlay');
+
+  overlay.innerHTML = `
+    <div class="password-modal">
+      <button class="settings-close">&times;</button>
+      <h3 data-i18n="password.promptTitle">Введите пароль</h3>
+      <input type="password" id="password-prompt-input" data-i18n-placeholder="password.placeholder" placeholder="Пароль">
+      <p class="password-error" id="password-error" data-i18n="password.error">Неверный пароль</p>
+      <button class="update-button" id="password-submit">
+        <span class="button-icon">🔒</span> <span data-i18n="password.submit">Войти</span>
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // Применяем перевод к модалке
+  applyTranslations(overlay);
+
+  // Закрытие
+  overlay.querySelector('.settings-close').addEventListener('click', () => overlay.remove());
+
+  const inputPrompt = overlay.querySelector('#password-prompt-input');
+  const submit = overlay.querySelector('#password-submit');
+  const error = overlay.querySelector('#password-error');
+
+  function checkPassword() {
+    if (inputPrompt.value === correctPassword) overlay.remove();
+    else error.style.display = 'block';
+  }
+
+  submit.addEventListener('click', checkPassword);
+  inputPrompt.addEventListener('keydown', e => { if(e.key === 'Enter') checkPassword(); });
+}
+
+function initBlacklistTags() {
+    const input = document.querySelector('#content input[type="text"]');
+    if (!input) return;
+    const addBtn = input.nextElementSibling; // кнопка "+"
+    const container = input.parentElement.nextElementSibling; // контейнер для тегов
+    const blacklist = new Set(JSON.parse(localStorage.getItem('blacklistTags') || '[]'));
+
+    function renderTags() {
+        container.innerHTML = '';
+        blacklist.forEach(tag => {
+            const span = document.createElement('span');
+            span.textContent = tag;
+            span.style.cssText = `
+              background: var(--bg-hover);
+              padding: 5px 10px;
+              border-radius: 20px;
+              font-size: 0.9rem;
+              cursor: pointer;
+              margin-right: 5px;
+            `;
+            span.className = 'blacklist-tag';
+            span.style.cursor = 'pointer';
+            span.title = 'Удалить';
+            span.addEventListener('click', () => {
+                blacklist.delete(tag);
+                localStorage.setItem('blacklistTags', JSON.stringify([...blacklist]));
+                renderTags();
+                filterGallery();
+            });
+            container.appendChild(span);
+        });
+    }
+
+    addBtn.addEventListener('click', () => {
+        const val = input.value.trim().toLowerCase();
+        if (val && !blacklist.has(val)) {
+            blacklist.add(val);
+            localStorage.setItem('blacklistTags', JSON.stringify([...blacklist]));
+            input.value = '';
+            renderTags();
+            filterGallery();
+        }
+    });
+
+    // Enter для добавления
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') addBtn.click();
+    });
+
+    renderTags();
+}
+
 function initIncognitoMode() {
   const incognitoToggle = document.getElementById('incognito-toggle');
   const incognitoButton = document.getElementById('incognito-mode');
+
+  if (!incognitoToggle || !incognitoButton) return;
+
 
   incognitoToggle.addEventListener('change', function () {
     incognitoButton.style.backgroundColor = this.checked ? 'var(--accent)' : '';
@@ -215,7 +271,11 @@ function initIncognitoMode() {
     this.style.backgroundColor = incognitoToggle.checked ? 'var(--accent)' : '';
   });
 }
-function initSetting() {
+
+
+
+
+async function initSetting() {
   const openSettingsBtn = document.getElementById('open-settings');
   const closeSettingsBtn = document.getElementById('close-settings');
   const settingsOverlay = document.getElementById('settings-overlay');
@@ -236,64 +296,70 @@ function initSetting() {
     }
   }
 
-// создаем вкладки и секции
-  settings.forEach((s, i) => {
+  // создаем вкладки и секции
+  for (const [i, s] of settings.entries()) {
     const btn = document.createElement("button");
-    btn.innerHTML = `${s.icon} ${s.title}`;
+    const svg = await loadIconSVG(`assets/icons/${s.icon}`);
+  
+    // Вставляем ключ для перевода
+    btn.innerHTML = `${svg} <span data-i18n="${s.title}">${s.title}</span>`;
     btn.dataset.tab = s.name;
     if (i === 0) btn.classList.add("active");
-    if (i == 2) btn.classList.add("hidden"); // скрытая вкладка
+    if (s.name === "github") btn.classList.add("hidden");
     tabsContainer.appendChild(btn);
-
+  
     const section = document.createElement("div");
     section.classList.add("settings-section");
     if (i === 0) section.classList.add("active");
     section.id = s.name;
-    section.innerHTML = s.description;
+    await loadSettingHTML(section, s.html);
     contentContainer.appendChild(section);
-
-    // открытие вкладки при клике на кнопку
+  
     btn.addEventListener("click", () => openTab(s.name));
-  });
+  
+    if (s.name === "theme") initThemeSwitcher(section);
+    if (s.name === "content") {
+      initContentModes(section);
+      initPasswordProtection();
+    }
+    if (s.name === "about") initUpdate(section);
+    if (s.name === "languages") initLanguageSwitcher(section);
+  }
+  
+  // После генерации всех вкладок применяем переводы
+  applyTranslations(tabsContainer);
+  applyTranslations(contentContainer);
 
-  // !!! ОБРАБОТКА ВСЕХ BUTTON DATA-TAB В КОНТЕНТЕ !!!
+
+
+  // обработка кнопок внутри секций (например github в plugins)
   contentContainer.querySelectorAll('button[data-tab]').forEach(innerBtn => {
     const tabName = innerBtn.getAttribute('data-tab');
     innerBtn.addEventListener('click', () => openTab(tabName));
   });
 
-  openSettingsBtn.addEventListener('click', () => {
-    settingsOverlay.classList.add('active');
-  });
-
-  closeSettingsBtn.addEventListener('click', () => {
-    settingsOverlay.classList.remove('active');
-  });
-
-  const settingsButtons = document.querySelectorAll('.settings-left button');
-  const settingsSections = document.querySelectorAll('.settings-section');
-
-  settingsButtons.forEach(button => {
-    button.addEventListener('click', function () {
-      const tabId = this.getAttribute('data-tab');
-
-      settingsButtons.forEach(btn => btn.classList.remove('active'));
-      this.classList.add('active');
-
-      settingsSections.forEach(section => {
-        section.classList.remove('active');
-        if (section.id === tabId) section.classList.add('active');
-      });
-    });
-  });
+  openSettingsBtn.addEventListener('click', () => settingsOverlay.classList.add('active'));
+  closeSettingsBtn.addEventListener('click', () => settingsOverlay.classList.remove('active'));
 
   // Закрытие при клике вне окна
   settingsOverlay.addEventListener('click', e => {
-    if (e.target === settingsOverlay) {
-      settingsOverlay.classList.remove('active');
-    }
+    if (e.target === settingsOverlay) settingsOverlay.classList.remove('active');
   });
 }
+
+
+async function loadIconSVG(path) {
+  try {
+    const res = await fetch(path);
+    const svgText = await res.text();
+    return svgText;
+  } catch (err) {
+    console.error(`Ошибка загрузки SVG: ${err}`);
+    return `<span style="color:red;">⚠</span>`; // fallback
+  }
+}
+
+
 function initThemeSwitcher() {
   const themes = [
     { id: 'light', name: 'Светлая', accent: " #6c5ce7" },
@@ -345,40 +411,100 @@ function initThemeSwitcher() {
   const savedTheme = localStorage.getItem('theme') || 'dark';
   applyTheme(savedTheme);
 }
-function initUpdate() {
-    const checkBtn = document.getElementById('check-update');
-    const updateStatus = document.getElementById('update-status');
 
-    // если элементов нет → просто выходим, чтобы не крашило
-    if (!checkBtn || !updateStatus) return;
 
-    const statusText = updateStatus.querySelector('.status-text');
+function initUpdate(container = document) {
+  const checkBtn = container.querySelector('#check-update');
+  const updateStatus = container.querySelector('#update-status');
+  if (!checkBtn || !updateStatus) return;
 
-    checkBtn.addEventListener('click', () => {
-        checkBtn.classList.add('loading');
-        updateStatus.className = 'status-container checking';
-        statusText.textContent = 'Проверяем обновления...';
+  const statusText = updateStatus.querySelector('.status-text');
 
-        window.electronAPI.checkForUpdates();
-    });
+  // Эмуляция апдейта для дев режима
+  if (!window.electronAPI.isPackaged) { // проверка dev/production
+    const fakeUpdate = {
+      version: "1.2.0-dev",
+      changelog: [
+        "- Добавлена новая функция X",
+        "- Исправлен баг Y",
+        "> Обновлён дизайн"
+      ]
+    };
+    showUpdateModal(fakeUpdate);
+    statusText.textContent = `Доступна версия ${fakeUpdate.version} (dev mode)`;
+    return; // выходим, чтобы не делать реальную проверку
+  }
 
-    window.electronAPI.onUpdateInfo((info) => {
-        if (info.version === null) {
-            updateStatus.className = 'status-container up-to-date';
-            statusText.textContent = '✅ Обновлений нет. Вы используете последнюю версию.';
-        } else {
-            updateStatus.className = 'status-container available';
-            statusText.textContent = `Доступно обновление до версии ${info.version}, размер: ${info.size} MB. Скачивается...`;
-        }
-        checkBtn.classList.remove('loading');
-    });
+  checkBtn.addEventListener('click', () => {
+    statusText.textContent = 'Проверяем обновления...';
+    checkBtn.classList.add('loading');
+    window.electronAPI.checkForUpdates();
+  });
 
-    window.electronAPI.onUpdateError((err) => {
-        updateStatus.className = 'status-container error';
-        statusText.textContent = `❌ Ошибка проверки обновлений: ${err}`;
-        checkBtn.classList.remove('loading');
-    });
+  window.electronAPI.onUpdateInfo((info) => {
+    checkBtn.classList.remove('loading');
+
+    if (info.version === null) {
+      statusText.textContent = '✅ Обновлений нет. Вы используете последнюю версию.';
+    } else {
+      statusText.textContent = `Доступна версия ${info.version}`;
+      showUpdateModal(info); // показываем модалку с обновлением
+    }
+    checkBtn.classList.remove('loading');
+  });
+
+  window.electronAPI.onUpdateError((err) => {
+    updateStatus.className = 'status-container error';
+    statusText.textContent = `❌ Ошибка проверки обновлений: ${err}`;
+    checkBtn.classList.remove('loading');
+  });
 }
+
+
+function showUpdateModal(info) {
+  const overlay = document.createElement('div');
+  overlay.classList.add('password-overlay');
+
+
+
+  overlay.innerHTML = `
+    <div class="password-modal">
+      <button class="settings-close">&times;</button>
+      <h3>Доступно обновление до версии ${info.version}</h3>
+      <div class="card-section">
+        <p><strong>Что нового:</strong></p>
+        <div id="changelog-list" style="margin-left: 15px;"></div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px;">
+        <button id="cancel-update" class="update-button" style="background:#ccc; color:#000;">Отмена</button>
+        <button id="confirm-update" class="update-button">Обновить</button>
+      </div>
+    </div>
+  `;
+
+
+  
+
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('.settings-close').addEventListener('click', () => overlay.remove());
+  overlay.querySelector('#cancel-update').addEventListener('click', () => overlay.remove());
+
+  overlay.querySelector('#confirm-update').addEventListener('click', () => {
+    overlay.remove();
+    // безопасно вызываем quitAndInstall только если оно определено
+    if (window.electronAPI.quitAndInstall) window.electronAPI.quitAndInstall();
+  });
+
+  const changelogEl = overlay.querySelector('#changelog-list');
+  (info.changelog || []).forEach(line => {
+    const el = document.createElement(line.startsWith("-") ? "li" : "p");
+    el.textContent = line.replace(/^[-|>]\s?/, "");
+    changelogEl.appendChild(el);
+  });
+}
+
+
 function initViewModes() {
   const viewButtons = document.querySelectorAll('.view-btn');
   const gallery = document.getElementById('gallery');
@@ -395,24 +521,30 @@ function initViewModes() {
   });
 }
 
-async function about(){
-  const infoApp = window.appInfo.get();
+async function about() {
+    const infoApp = window.appInfo.get();
+    const info = await checkForUpdates();
+    if (!info) return;
 
-  const info = await checkForUpdates();
-  if (!info) return;
+    const appVersionEl = document.getElementById("app-version");
+    const appVersionNewEl = document.getElementById("app-version-new");
+    const appAuthorEl = document.getElementById("app-author");
+    const appLicenseEl = document.getElementById("app-license");
+    const changelogElement = document.getElementById("changelog");
 
-  document.getElementById("app-version").textContent = infoApp.version;
-  document.getElementById("app-version-new").textContent = info.version;
-  document.getElementById("app-author").textContent = infoApp.author;
-  document.getElementById("app-license").textContent = infoApp.license;
+    if (appVersionEl) appVersionEl.textContent = infoApp.version;
+    if (appVersionNewEl) appVersionNewEl.textContent = info.version;
+    if (appAuthorEl) appAuthorEl.textContent = infoApp.author;
+    if (appLicenseEl) appLicenseEl.textContent = infoApp.license;
 
-  const changelogElement = document.getElementById("changelog");
-  changelogElement.innerHTML = "";
-
-  info.changelog.forEach(item => {
-    const li = document.createElement("li");
-    li.textContent = item;
-    changelogElement.appendChild(li);
-  });
-
+    if (changelogElement) {
+        changelogElement.innerHTML = "";
+        info.changelog.forEach(line => {
+            const el = document.createElement(
+                line.startsWith("-") ? "li" : line.startsWith(">") ? "blockquote" : "p"
+            );
+            el.textContent = line.replace(/^[-|>]\s?/, "");
+            changelogElement.appendChild(el);
+        });
+    }
 }

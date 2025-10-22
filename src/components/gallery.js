@@ -1,317 +1,358 @@
-// Данные для тегов
-const tagsData = [
-    { name: 'Minecraft', count: '42K' },
-    { name: 'Stalker', count: '42K' },
-    { name: 'Robot', count: '42K' },
-    { name: '2', count: '42K' },
-    { name: '3', count: '42K' },
-];
+// API
+const E621_API = 'https://e621.net/posts.json';
 
-// Данные для фильтров
-const filtersData = [
-    { name: 'Рейтинг: Safe' },
-    { name: 'Рейтинг: Questionable' },
-    { name: 'Рейтинг: Explicit', },
-    { name: 'Тип: Изображения' },
-    { name: 'Тип: Анимации' },
-    { name: 'Тип: Видео' }
-];
+const infoApp = window.appInfo.get();
 
-// Данные для коллекций
-const collectionsData = [
-    { name: 'Избранное ★' },
-    { name: 'История просмотров' },
-    { name: 'Черный список' },
-    { name: 'Лучшее за месяц' }
-];
+const USER_AGENT = `${infoApp.name}/${infoApp.version} (by rufik on e621)`;
 
-export function initGalleryLoading(){
-    initSkeletonLoading();
+// Рейтинги
+const ratingsMap = {
+    s: 'Safe',
+    q: 'Questionable',
+    e: 'Explicit'
+};
+
+const ratingsOrder = ['s', 'q', 'e']; // порядок по возрастанию "безопасности"
+
+
+// Состояние
+export let originalTagList = null;
+export let galleryData = [];
+export let allTags = new Set();
+export let currentTags = '';
+export let currentPage = 1;
+
+const PAGE_LIMIT = 40;
+
+// Инициализация
+export async function initGalleryLoading() {
+    await loadE621Posts(); // подгружаем реальные посты
+    initCensorshipToggle();
     initTag();
+    initPagination();
+
 }
 
+// Загрузка постов
+export async function loadE621Posts(tags = currentTags, page = currentPage, extraFilters = {}) {
+    try {
+        const res = await fetch(`${E621_API}?tags=${encodeURIComponent(tags)}&limit=${PAGE_LIMIT}&page=${page}`, {
+            headers: { 'User-Agent': USER_AGENT }
+        })
+        const data = await res.json();
 
-function initSkeletonLoading() {
-  setTimeout(() => {
-    document.querySelectorAll('.skeleton').forEach(el => {
-      el.style.display = 'none';
-    });
+        currentTags = tags;
+        currentPage = page;
 
-    const gallery = document.getElementById('gallery');
-    if (!gallery) return;
+        galleryData = data.posts.map(post => ({
+            id: post.id,
+            url: post.file.url,
+            previewUrl: post.preview?.url || post.file.url,
+            title: `E621 #${post.id}`,
+            description: post.description || `Изображение с тегами: ${post.tags.general.join(', ')}`,
+            type: ratingsMap[post.rating] || 'Unknown',
+            fileType: post.file.ext || 'unknown',
+            tags: post.tags.general,
+            tagsByCategory: post.tags,
+            likes: post.score.up,
+            dislikes: post.score.down,
+            views: post.fav_count || 0
+        }));
 
-    const tags = tagsData.map(tag => tag.name);
-
-    const types = filtersData
-    .filter(f => f.name) // убираем пустые
-    .map(f => f.name.replace('Тип: '|| 'Рейтинг: ', '')); // убираем префиксы
-
-    for (let i = 0; i < 20; i++) {
-      const card = document.createElement('div');
-      card.className = 'card';
-
-      const randomType = types[Math.floor(Math.random() * types.length)];
-      const randomTags = Array.from({ length: 2 }, () => tags[Math.floor(Math.random() * tags.length)]);
-
-      card.innerHTML = `      
-        <div class="card-badge">${randomType}</div>
-        <img class="card-img" src="https://placehold.co/300x400?text=Image+${i + 1}" alt="Preview">
-        <div class="card-content">
-          <div class="card-title">Изображения: #${i + 1}</div>
-        </div>
-        <div class="card-meta">
-            <div class="card-tags-wrapper" style="margin-top: auto;">
-              <div class="card-tags">
-                ${randomTags.map(tag => `<span class="tag">#${tag}</span>`).join('')}
-              </div>
-            </div>
-          </div>
-        <div class="card-actions">
-          <button title="В избранное">
-            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-              <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01L8 2.748zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143c.06.055.119.112.176.171a3.12 3.12 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15z"/>
-            </svg>
-          </button>
-          <button title="Скачать">
-            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-              <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-            </svg>
-          </button>
-        </div>`;
-
-      gallery.appendChild(card);
-      
-      // Добавляем обработчик клика для открытия карточки
-      card.addEventListener('click', (e) => {
-        // игнорируем клики по кнопкам и ссылкам
-        if (
-          e.target.closest('button') ||
-          e.target.closest('a') ||
-          e.target.tagName === 'BUTTON'
-        ) return;
+        // score
+        if (extraFilters.score) {
+            extraFilters.score.forEach(f => {
+                if (f.op === '>') galleryData = galleryData.filter(p => p.likes > f.value);
+                else if (f.op === '>=') galleryData = galleryData.filter(p => p.likes >= f.value);
+                else if (f.op === '<') galleryData = galleryData.filter(p => p.likes < f.value);
+                else if (f.op === '<=') galleryData = galleryData.filter(p => p.likes <= f.value);
+                else if (f.op === '=') galleryData = galleryData.filter(p => p.likes === f.value);
+            });
+        }
         
-        // Получаем данные карточки
-        const cardData = {
-          title: `Изображение #${i + 1}`,
-          imageSrc: `https://placehold.co/300x400?text=Image+${i + 1}`,
-          description: `Описание изображения #${i + 1}. Это прекрасное изображение с тегами: ${randomTags.join(', ')}.`,
-          type: randomType,
-          tags: randomTags,
-          likes: 0,
-          dislikes: 0,
-          views: 0
-        };
-        
-        // Открываем карточку
-        openCardView(cardData);
-      });
-    }
-  }, 1500);
-}
-
-// Функция для открытия просмотра карточки
-function openCardView(cardData) {
-  // Скрываем галерею
-  const gallery = document.querySelector('.gallery-wrapper');
-  if (gallery) {
-    gallery.classList.add('hidden');
-  }
-  
-  // Показываем карточку
-  const cardView = document.querySelector('.card-active');
-  if (cardView) {
-    // Заполняем карточку данными
-    cardView.querySelector('.viewer-image').src = cardData.imageSrc;
-    cardView.querySelector('.viewer-image').alt = cardData.title;
-    cardView.querySelector('.image-description').textContent = cardData.description;
-    
-    // Обновляем теги
-    const tagsContainer = cardView.querySelector('.image-tags');
-    tagsContainer.innerHTML = '';
-    cardData.tags.forEach(tag => {
-      const tagElement = document.createElement('span');
-      tagElement.textContent = `#${tag}`;
-      tagsContainer.appendChild(tagElement);
-    });
-    
-    // Обновляем лайки/дизлайки
-    cardView.querySelector('.like-btn span').textContent = cardData.likes;
-    cardView.querySelector('.dislike-btn span').textContent = cardData.dislikes;
-    
-    // Показываем карточку
-    cardView.classList.remove('hidden');
-    
-    // Добавляем обработчик для кнопки закрытия
-    const closeBtn = cardView.querySelector('.card-close');
-    if (closeBtn) {
-      closeBtn.onclick = closeCardView;
-    }
-  }
-}
-
-// Функция для закрытия просмотра карточки
-function closeCardView() {
-  // Скрываем карточку
-  const cardView = document.querySelector('.card-active');
-  if (cardView) {
-    cardView.classList.add('hidden');
-  }
-  
-  // Показываем галерею
-  const gallery = document.querySelector('.gallery-wrapper');
-  if (gallery) {
-    gallery.classList.remove('hidden');
-  }
-}
-
-export function filterGallery(selectedTag = null, selectedType = null) {
-    const gallery = document.getElementById('gallery');
-    if (!gallery) return;
-
-    const cards = gallery.querySelectorAll('.card');
-
-    cards.forEach(card => {
-        const cardTags = Array.from(card.querySelectorAll('.card-tags .tag'))
-                              .map(el => el.textContent.replace('#', ''));
-
-        const cardType = card.querySelector('.card-badge')?.textContent || '';
-
-        const matchesTag = selectedTag ? cardTags.includes(selectedTag) : true;
-        const matchesType = selectedType ? cardType === selectedType : true;
-
-        card.style.display = matchesTag && matchesType ? 'block' : 'none';
-    });
-}
+        // views
+        if (extraFilters.views) {
+            extraFilters.views.forEach(f => {
+                if (f.op === '>') galleryData = galleryData.filter(p => p.views > f.value);
+                else if (f.op === '>=') galleryData = galleryData.filter(p => p.views >= f.value);
+                else if (f.op === '<') galleryData = galleryData.filter(p => p.views < f.value);
+                else if (f.op === '<=') galleryData = galleryData.filter(p => p.views <= f.value);
+                else if (f.op === '=') galleryData = galleryData.filter(p => p.views === f.value);
+            });
+        }
 
 
-//============================Tags===========================//
 
+        allTags.clear();
+        galleryData.forEach(post => post.tags.forEach(tag => allTags.add(tag)));
 
-function initTag(){
-    initTagList();
-    initTagFilters();
-    initFilters();
-    initCollections();
-    setupSearch();
-    webcloud();
-}
+        initTagList();
 
+        // Обновляем активный тег
+        if (currentTags && currentTags.trim().length > 0) {
+            const tagList = document.getElementById('tagList');
+            if (tagList) {
+                const match = Array.from(tagList.querySelectorAll('li')).find(li => {
+                    return li.querySelector('span')?.textContent === currentTags;
+                });
+                if (match) {
+                    tagList.querySelectorAll('li').forEach(item => item.classList.remove('active'));
+                    match.classList.add('active');
+                }
+            }
+        }
 
-// Функция создания элемента тега
-function createTagElement(tag, isActive = false) {
-    const li = document.createElement('li');
-    if (isActive) li.classList.add('active');
+        renderGallery();
 
-    const nameSpan = document.createElement('span');
-    nameSpan.textContent = tag.name;
+        // ✅ фильтруем сразу после рендера, чтобы учесть maxRating и blacklist
+        filterGallery();
 
-    const countSpan = document.createElement('span');
-    countSpan.className = 'tag-count';
-    countSpan.textContent = tag.count;
+        const totalPosts = data.total_posts || 1000;
+        renderPageNumbers(totalPosts);
 
-    li.appendChild(nameSpan);
-    li.appendChild(countSpan);
-
-    li.addEventListener('click', () => {
-        document.querySelectorAll('#tagList li').forEach(item => {
-            item.classList.remove('active');
-        });
-        li.classList.add('active');
-    });
-
-    return li;
-}
-
-// Функция создания элемента списка
-function createListItem(text, isActive = false) {
-    const li = document.createElement('li');
-    li.textContent = text;
-    if (isActive) li.classList.add('active');
-
-    li.addEventListener('click', () => {
-        li.parentElement.querySelectorAll('li').forEach(item => item.classList.remove('active'));
-        li.classList.add('active');
-    
-        // получаем выбранный тег или тип
-        const selectedTag = document.querySelector('#tagList li.active')?.querySelector('span:first-child')?.textContent || null;
-        const selectedType = document.querySelector('#filterList li.active')?.textContent.replace('Тип: ', '') || null;
-    
-        filterGallery(selectedTag, selectedType);
-    });
-
-    return li;
-}
-
-// В initTagFilters добавляем обработку кнопки "Все"
-export function initTagFilters() {
-    const tagList = document.getElementById('tagList'); 
-    const filterList = document.getElementById('filterList'); 
-
-    // Добавляем кнопку "Все" в фильтры типов
-    const allFilter = createListItem('Все', true); // по умолчанию активна
-    filterList.prepend(allFilter);
-
-    function getActiveTag() {
-        const active = tagList.querySelector('li.active');
-        return active ? active.querySelector('span')?.textContent : null;
-    }
-
-    function getActiveType() {
-        const active = filterList.querySelector('li.active');
-        if (!active) return null;
-        return active.textContent === 'Все' ? null : active.textContent.replace('Тип: ', '');
-    }
-
-    // обработка клика на тег
-    tagList.querySelectorAll('li').forEach(li => {
-        li.addEventListener('click', () => {
-            tagList.querySelectorAll('li').forEach(item => item.classList.remove('active'));
-            li.classList.add('active');
-
-            filterGallery(getActiveTag(), getActiveType());
-        });
-    });
-
-    // обработка клика на тип
-    filterList.querySelectorAll('li').forEach(li => {
-        li.addEventListener('click', () => {
+        // Сбрасываем фильтр "Все"
+        const filterList = document.getElementById('filterList');
+        if (filterList) {
             filterList.querySelectorAll('li').forEach(item => item.classList.remove('active'));
-            li.classList.add('active');
+            const allFilter = filterList.querySelector('li'); // первая кнопка — "Все"
+            if (allFilter) allFilter.classList.add('active');
+        }
 
-            filterGallery(getActiveTag(), getActiveType());
+    } catch (err) {
+        console.error('Ошибка загрузки E621:', err);
+    }
+}
+
+// Загружаем комментарии для поста
+async function loadComments(postId) {
+    try {
+        const res = await fetch(`https://e621.net/comments.json?search[post_id]=${postId}`, {
+            headers: {
+                'User-Agent': USER_AGENT,
+                'Accept': 'application/json'
+            }
         });
+
+        if (!res.ok) {
+            console.error("Ошибка HTTP при загрузке комментариев:", res.status, res.statusText);
+            return [];
+        }
+
+        const data = await res.json();
+        console.log("API ответ:", data);
+
+        if (!data.comments) {
+            console.warn("В ответе нет поля comments:", data);
+            return [];
+        }
+
+        return data.comments;
+    } catch (err) {
+        console.error('Ошибка загрузки комментариев:', err);
+        return [];
+    }
+}
+
+// Проверка, добавлен ли пост в избранное
+export function isFavorite(postId) {
+    const favIds = JSON.parse(localStorage.getItem('favorites') || '[]');
+    return favIds.includes(postId);
+}
+
+// Добавление / удаление из избранного
+export function toggleFavorite(postId) {
+    let favIds = JSON.parse(localStorage.getItem('favorites') || '[]');
+    if (favIds.includes(postId)) {
+        favIds = favIds.filter(id => id !== postId); // удаляем
+    } else {
+        favIds.push(postId); // добавляем
+    }
+    localStorage.setItem('favorites', JSON.stringify(favIds));
+}
+
+
+// gallery.js
+export function renderGallery(data = galleryData) {
+    const gallery = document.getElementById('gallery');
+    if (!gallery) return;
+
+    gallery.innerHTML = '';
+
+    const censorEnabled = document.getElementById('censor-toggle')?.checked || false;
+
+    data.forEach((cardInfo) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        let fileLabel = cardInfo.fileType || 'Unknown';
+        if (fileLabel === 'jpeg') fileLabel = 'jpg';
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileLabel)) fileLabel = 'Image';
+        else if (['webm', 'mp4'].includes(fileLabel)) fileLabel = 'Video';
+
+        let previewUrl = cardInfo.url;
+        if (['webm', 'mp4', 'gif'].includes(cardInfo.fileType)) {
+            previewUrl = cardInfo.previewUrl || '';
+        }
+
+        // Добавляем overlay цензуры
+        const isCensored = censorEnabled && cardInfo.type === 'Explicit' || cardInfo.type === 'Questionable';
+        card.classList.toggle('censored', isCensored);
+
+        card.innerHTML = `
+            <div class="card-badge">${cardInfo.type} / ${cardInfo.fileType}</div>
+            <img class="card-img" src="${previewUrl}" alt="Preview">
+            ${isCensored ? '<div class="censor-overlay">18+</div>' : ''}
+            <div class="card-content">
+                <div class="card-title">${cardInfo.title}</div>
+            </div>
+            <div class="card-meta">
+                <div class="card-tags-wrapper" style="margin-top: auto;">
+                    <div class="card-tags">
+                        ${cardInfo.tags.slice(0, 3).map(tag => `<span class="tag" data-tag="${tag}">#${tag}</span>`).join('')}
+                    </div>
+                </div>
+            </div>
+            <div class="card-actions">
+                <button title="Скачать">⬇</button>
+                <button title="Избранное" class="fav-btn">${isFavorite(cardInfo.id) ? '★' : '☆'}</button>
+            </div>
+        `;
+
+        // Остальной код для избранного, скачивания, открытия карточки — без изменений
+        const favBtn = card.querySelector('.fav-btn');
+        if (favBtn) {
+            favBtn.addEventListener("click", e => {
+                e.stopPropagation();
+                toggleFavorite(cardInfo.id);
+                favBtn.textContent = isFavorite(cardInfo.id) ? '★' : '☆';
+                const activeTab = document.querySelector('.menu-btn.active')?.dataset.tab;
+                if (activeTab === 'favorites') {
+                    const favIds = JSON.parse(localStorage.getItem('favorites') || '[]');
+                    const favPosts = galleryData.filter(post => favIds.includes(post.id));
+                    renderGallery(favPosts);
+                }
+            });
+        }
+
+        card.addEventListener('click', e => {
+            if (e.target.closest('button')) return;
+            let history = JSON.parse(localStorage.getItem('history') || '[]');
+            if (!history.includes(cardInfo.id)) {
+                history.push(cardInfo.id);
+                localStorage.setItem('history', JSON.stringify(history));
+            }
+            openCardView(cardInfo);
+        });
+
+        const downloadBtn = card.querySelector('button[title="Скачать"]');
+        if (downloadBtn) {
+            downloadBtn.addEventListener("click", e => {
+                e.stopPropagation();
+                const filename = `${cardInfo.title}.${cardInfo.fileType}`;
+                window.download.downloadToAppFolder(cardInfo.url, filename);
+            });
+        }
+
+        gallery.appendChild(card);
     });
 }
 
 
+
+const overlay = document.getElementById("docOverlay");
+const docContent = document.getElementById("docContent");
+const closeDoc = document.getElementById("closeDoc");
+
+const urls = {
+  privacy: "https://e621.net/static/privacy",
+  terms: "https://e621.net/static/terms_of_service",
+  help: "https://e621.net/help/faq"
+};
+
+document.querySelectorAll(".site-footer a").forEach(link => {
+  link.addEventListener("click", async (e) => {
+    e.preventDefault();
+    const type = link.dataset.doc;
+    if (!type) return;
+
+    overlay.classList.add("active");
+    docContent.innerHTML = "<h3>Загрузка...</h3>";
+
+    try {
+      const res = await fetch(urls[type]);
+      const html = await res.text();
+
+      // временный контейнер
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+
+      // достаём только полезный контент (у e621 это #content или .body)
+      const main = doc.querySelector("#content") || doc.body;
+      docContent.innerHTML = main.innerHTML;
+    } catch (err) {
+      docContent.innerHTML = `<p style="color:red">Ошибка загрузки: ${err}</p>`;
+    }
+  });
+});
+
+closeDoc.addEventListener("click", () => {
+  overlay.classList.remove("active");
+});
+
+
+//================ Tags & Filters =================//
+function initTag() {
+    initTagList();
+    initFilters();
+    setupSearch();
+}
 
 // Инициализация тег-листа
 function initTagList() {
     const tagList = document.getElementById('tagList');
+    if (!tagList) return;
+    tagList.innerHTML = '';
 
-    // Добавляем кнопку "Все"
+    // Кнопка "Все"
     const allTagLi = document.createElement('li');
     allTagLi.textContent = 'Все';
-    allTagLi.classList.add('active'); // по умолчанию активна
-    allTagLi.addEventListener('click', () => {
+    allTagLi.classList.add('active');
+    allTagLi.addEventListener('click', async () => {
+        // Снимаем active со всех и ставим на "Все"
         tagList.querySelectorAll('li').forEach(item => item.classList.remove('active'));
         allTagLi.classList.add('active');
-        filterGallery(null, getActiveType());
+
+        // Очистим поисковую строку и загрузим дефолт
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) searchInput.value = '';
+        await loadE621Posts('', 1);
     });
     tagList.appendChild(allTagLi);
 
-    // Добавляем остальные теги
-    tagsData.forEach(tag => {
-        tagList.appendChild(createTagElement(tag));
+    // Динамические теги (максимум 25)
+    Array.from(allTags).sort().slice(0, 25).forEach(tagName => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span>${tagName}</span>`;
+        li.addEventListener('click', async () => {
+            // помечаем active
+            tagList.querySelectorAll('li').forEach(item => item.classList.remove('active'));
+            li.classList.add('active');
+
+            // ставим в поисковую строку и выполняем поиск
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = tagName;
+            await loadE621Posts(tagName, 1);
+        });
+        tagList.appendChild(li);
     });
 }
+
+
 
 // Инициализация фильтров
 function initFilters() {
     const filterList = document.getElementById('filterList');
-
-    // Очищаем контейнер перед добавлением
+    if (!filterList) return;
     filterList.innerHTML = '';
 
     // Кнопка "Все"
@@ -321,124 +362,334 @@ function initFilters() {
     allFilterLi.addEventListener('click', () => {
         filterList.querySelectorAll('li').forEach(item => item.classList.remove('active'));
         allFilterLi.classList.add('active');
-        filterGallery(getActiveTag(), null);
+        filterGallery();
     });
     filterList.appendChild(allFilterLi);
 
-    // Добавляем остальные фильтры
-    filtersData.forEach(filter => {
-        const li = createListItem(filter.name, filter.active);
-        li.dataset.name = filter.name;
+    Object.values(ratingsMap).forEach(type => {
+        const li = document.createElement('li');
+        li.textContent = type;
         li.addEventListener('click', () => {
             filterList.querySelectorAll('li').forEach(item => item.classList.remove('active'));
             li.classList.add('active');
-            filterGallery(getActiveTag(), filter.name);
+            filterGallery();
         });
         filterList.appendChild(li);
     });
 }
 
+// Парсим поисковый запрос
+function parseSearchQuery(query) {
+    const tokens = query.split(/\s+/);
+    const tags = [];
+    const extraFilters = {};
 
-// Инициализация коллекций
-function initCollections() {
-    const collectionList = document.getElementById('collectionList');
-    collectionsData.forEach(collection => {
-        collectionList.appendChild(createListItem(collection.name));
+    tokens.forEach(token => {
+        // score фильтры
+        if (/^score([><]=?|=)\d+$/.test(token)) {
+            const [, op, value] = token.match(/^score([><]=?|=)(\d+)$/);
+            extraFilters.score = extraFilters.score || [];
+            extraFilters.score.push({ op, value: Number(value) });
+        }
+        // views фильтры
+        else if (/^views([><]=?|=)\d+$/.test(token)) {
+            const [, op, value] = token.match(/^views([><]=?|=)(\d+)$/);
+            extraFilters.views = extraFilters.views || [];
+            extraFilters.views.push({ op, value: Number(value) });
+        }
+        // rating
+        else if (/^rating:(\w+)$/.test(token)) {
+            extraFilters.rating = token.split(':')[1];
+        }
+        // обычные теги
+        else {
+            tags.push(token);
+        }
     });
+
+    return { tags: tags.join(' '), extraFilters };
 }
 
-// Функция поиска тегов
+
+
+// Поиск тегов
+// Поиск по тегам (по Enter)
+// Изменяем setupSearch
 function setupSearch() {
     const searchInput = document.getElementById('searchInput');
-    searchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        const tagItems = document.querySelectorAll('#tagList li');
 
-        tagItems.forEach(item => {
-            const tagName = item.querySelector('span:first-child').textContent.toLowerCase();
-            if (tagName.includes(searchTerm)) {
-                item.style.display = 'flex';
-            } else {
-                item.style.display = 'none';
+    searchInput.addEventListener('keydown', async e => {
+        if (e.key === 'Enter') {
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            if (searchTerm.length === 0) {
+                await loadE621Posts('', 1);
+                initTagList();
+                return;
             }
-        });
+
+            const { tags, extraFilters } = parseSearchQuery(searchInput.value);
+            await loadE621Posts(tags, 1, extraFilters);
+            initTagList();
+        }
     });
 }
 
-// API для управления тегами
-const tagManager = {
-    addTag: (name, count) => {
-        tagsData.push({ name, count });
-        refreshTagList();
-    },
+// Инициализация тумблера цензуры
+function initCensorshipToggle() {
+  const censorToggle = document.getElementById('censor-toggle');
+  if (!censorToggle) return;
 
-    removeTag: (name) => {
-        const index = tagsData.findIndex(tag => tag.name === name);
-        if (index !== -1) {
-            tagsData.splice(index, 1);
-            refreshTagList();
-        }
-    },
+  function applyCensorship(enabled) {
+    const gallery = document.getElementById('gallery');
+    if (!gallery) return;
 
-    updateTag: (oldName, newName, newCount) => {
-        const tag = tagsData.find(tag => tag.name === oldName);
-        if (tag) {
-            tag.name = newName;
-            tag.count = newCount;
-            refreshTagList();
-        }
+    Array.from(gallery.children).forEach(card => {
+      const badge = card.querySelector('.card-badge');
+      if (!badge) return;
+
+      // Если это Explicit и включена цензура
+      if (badge.textContent.includes('Explicit')) {
+        if (enabled) card.classList.add('censored');
+        else card.classList.remove('censored');
+      }
+    });
+  }
+
+  // Инициализация при загрузке
+  const saved = localStorage.getItem('censorExplicit') === 'true';
+  censorToggle.checked = saved;
+  applyCensorship(saved);
+
+  // Переключение
+  censorToggle.addEventListener('change', () => {
+    const enabled = censorToggle.checked;
+    localStorage.setItem('censorExplicit', enabled);
+    applyCensorship(enabled);
+  });
+
+  // Чтобы фильтр сработал при подгрузке новых постов
+  window.filterGallery = ((orig) => (...args) => {
+    orig(...args);
+    applyCensorship(censorToggle.checked);
+  })(window.filterGallery);
+}
+
+
+// Фильтрация галереи
+// В фильтре галереи добавляем проверку на цензуру
+export function filterGallery() {
+    const activeLi = document.querySelector('#tagList li.active');
+    const blacklist = new Set(JSON.parse(localStorage.getItem('blacklistTags') || '[]'));
+    let selectedTag = null;
+    if (activeLi) {
+        const span = activeLi.querySelector('span');
+        selectedTag = span ? span.textContent.trim() : activeLi.textContent.trim();
+        if (selectedTag === 'Все') selectedTag = null;
     }
-};
 
-// Обновление списка тегов
-function refreshTagList() {
-    const tagList = document.getElementById('tagList');
-    tagList.innerHTML = '';
-    tagsData.forEach((tag, index) => {
-        tagList.appendChild(createTagElement(tag, index === 0));
+    const selectedTypeRaw = document.querySelector('#filterList li.active')?.textContent || null;
+    const selectedType = (selectedTypeRaw === 'Все' ? null : selectedTypeRaw);
+
+    const maxRatingSelect = document.getElementById('maxRatingSelect');
+    const maxRating = maxRatingSelect?.value || 'e'; // по умолчанию Explicit
+
+    const censorEnabled = document.getElementById('censor-toggle')?.checked || false;
+
+    const gallery = document.getElementById('gallery');
+    if (!gallery) return;
+
+    galleryData.forEach(cardInfo => {
+        const cardElem = Array.from(gallery.children).find(c =>
+            c.querySelector('.card-title')?.textContent === cardInfo.title
+        );
+    
+        const matchesTag = selectedTag ? cardInfo.tags.includes(selectedTag) : true;
+        const matchesType = selectedType ? cardInfo.type === selectedType : true;
+        let matchesRating = true;
+        if (maxRating !== 'all') {
+            const cardRating = Object.keys(ratingsMap).find(k => ratingsMap[k] === cardInfo.type);
+            const maxIndex = ratingsOrder.indexOf(maxRating);
+            const cardIndex = ratingsOrder.indexOf(cardRating);
+            matchesRating = cardIndex <= maxIndex;
+        }
+    
+        const matchesBlacklist = !cardInfo.tags.some(tag => blacklist.has(tag));
+
+        // ✅ новая проверка цензуры
+        const matchesCensor = censorEnabled && cardInfo.type === 'Explicit' ? false : true;
+    
+        if (cardElem) cardElem.style.display = matchesTag && matchesType && matchesRating && matchesBlacklist && matchesCensor ? 'block' : 'none';
     });
-}
 
-// Получение активного тега/фильтра
-function getActiveTag() {
-    const active = document.querySelector('#tagList li.active');
-    return active && active.textContent !== 'Все' ? active.textContent : null;
-}
-
-function getActiveType() {
-    const active = document.querySelector('#filterList li.active');
-    return active && active.textContent !== 'Все' ? active.textContent.replace('Тип: ', '') : null;
+    window.filterGallery = filterGallery;
 }
 
 
-function webcloud(){
-        // Обработчики для основных вкладок
-        const menuButtons = document.querySelectorAll('.menu-btn');
-        menuButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                // Удаляем активный класс у всех кнопок
-                menuButtons.forEach(btn => btn.classList.remove('active'));
-                // Добавляем активный класс текущей кнопке
-                this.classList.add('active');
 
-                // Здесь можно добавить логику загрузки контента для вкладки
-                const tabName = this.dataset.tab;
-                console.log('Активирована вкладка:', tabName);
+
+
+function initPagination(totalPosts = 1000) {
+    const pagination = document.getElementById('pagination');
+    if (!pagination) return;
+
+    pagination.innerHTML = `
+        <button id="firstPage">⏮ Первая</button>
+        <button id="prevPage">⬅ Назад</button>
+        <span id="pageNumbers"></span>
+        <button id="nextPage">Вперёд ➡</button>
+        <button id="lastPage" hidden>⏭ Последняя</button>
+    `;
+
+    document.getElementById('firstPage').addEventListener('click', async () => {
+        if (currentPage > 1) await loadE621Posts(currentTags, 1);
+    });
+
+    document.getElementById('prevPage').addEventListener('click', async () => {
+        if (currentPage > 1) await loadE621Posts(currentTags, currentPage - 1);
+    });
+
+    document.getElementById('nextPage').addEventListener('click', async () => {
+        await loadE621Posts(currentTags, currentPage + 1);
+    });
+
+    document.getElementById('lastPage').addEventListener('click', async () => {
+        const totalPages = Math.ceil(totalPosts / PAGE_LIMIT);
+        if (currentPage < totalPages) await loadE621Posts(currentTags, totalPages);
+    });
+
+    renderPageNumbers(totalPosts);
+}
+
+function renderPageNumbers(totalPosts) {
+    const pageNumbers = document.getElementById('pageNumbers');
+    if (!pageNumbers) return;
+
+    const totalPages = Math.ceil(totalPosts / PAGE_LIMIT);
+    pageNumbers.innerHTML = '';
+
+    const visible = 3; // сколько кнопок до и после текущей
+
+    let start = Math.max(1, currentPage - visible);
+    let end = Math.min(totalPages, currentPage + visible);
+
+    // Первая страница
+    if (start > 1) {
+        addPageButton(1);
+        if (start > 2) pageNumbers.appendChild(createDots());
+    }
+
+    for (let i = start; i <= end; i++) {
+        addPageButton(i);
+    }
+
+    // Последняя страница
+    if (end < totalPages) {
+        if (end < totalPages - 1) pageNumbers.appendChild(createDots());
+        addPageButton(totalPages);
+    }
+
+    function addPageButton(i) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        if (i === currentPage) btn.classList.add('active');
+        btn.addEventListener('click', async () => await loadE621Posts(currentTags, i));
+        pageNumbers.appendChild(btn);
+    }
+
+    function createDots() {
+        const span = document.createElement('span');
+        span.textContent = '…';
+        return span;
+    }
+
+    updatePaginationButtons(totalPages);
+}
+
+
+function updatePaginationButtons(totalPages) {
+    document.getElementById('prevPage').disabled = currentPage <= 1;
+    document.getElementById('nextPage').disabled = currentPage >= totalPages;
+}
+
+//================ Card View =================//
+async function openCardView(cardData) {
+    const gallery = document.querySelector('.gallery-wrapper');
+    if (gallery) gallery.classList.add('hidden');
+
+    const cardView = document.querySelector('.card-active');
+    if (!cardView) return;
+
+    // Картинка и описание
+    cardView.querySelector('.viewer-image').src = cardData.url;
+    cardView.querySelector('.viewer-image').alt = cardData.title;
+    cardView.querySelector('.image-description').textContent = cardData.description;
+
+    // Теги
+    const tagsContainer = cardView.querySelector('.image-tags');
+    tagsContainer.innerHTML = '';
+    
+    // Создаём wrapper для категорий тегов
+    const wrapper = document.createElement('div');
+    wrapper.className = 'image-tags-wrapper';
+    
+    // Добавляем категории тегов (если есть)
+    ['general','character','copyright','species','artist','invalid','lore','meta'].forEach(cat => {
+        const tags = cardData.tagsByCategory?.[cat] || [];
+        if (tags.length === 0) return;
+    
+        const catTitle = document.createElement('div');
+        catTitle.className = 'tag-category';
+        catTitle.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+    
+        const tagList = document.createElement('div');
+        tagList.className = 'tag-list';
+    
+        tags.forEach(tag => {
+            const span = document.createElement('span');
+            span.className = 'tag';
+            span.dataset.tag = tag;
+            span.textContent = `#${tag}`;
+    
+            // обработчик клика
+            span.addEventListener('click', async () => {
+                closeCardView(); // закрываем карточку
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) searchInput.value = tag;
+                await loadE621Posts(tag, 1);
+                initTagList();
             });
+    
+            tagList.appendChild(span);
         });
+    
+        wrapper.appendChild(catTitle);
+        wrapper.appendChild(tagList);
+    });
+    
+    tagsContainer.appendChild(wrapper);
 
-        // Обработчики для переключателя режимов
-        const modeButtons = document.querySelectorAll('.mode-btn');
-        modeButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                // Удаляем активный класс у всех кнопок режима
-                modeButtons.forEach(btn => btn.classList.remove('active'));
-                // Добавляем активный класс текущей кнопке
-                this.classList.add('active');
 
-                // Здесь можно добавить логику фильтрации контента
-                const mode = this.dataset.mode;
-                console.log('Выбран режим:', mode);
-            });
-        });
+    // Лайки / дизлайки
+    cardView.querySelector('.like-btn span').textContent = cardData.likes;
+    cardView.querySelector('.dislike-btn span').textContent = cardData.dislikes;
+
+    // Просмотры
+    cardView.querySelector('.view-count span').textContent = cardData.views;
+
+    // Показ окна
+    cardView.classList.remove('hidden');
+
+    // Закрытие
+    const closeBtn = cardView.querySelector('.card-close');
+    if (closeBtn) closeBtn.onclick = closeCardView;
+}
+
+
+
+function closeCardView() {
+    const cardView = document.querySelector('.card-active');
+    if (cardView) cardView.classList.add('hidden');
+
+    const gallery = document.querySelector('.gallery-wrapper');
+    if (gallery) gallery.classList.remove('hidden');
 }

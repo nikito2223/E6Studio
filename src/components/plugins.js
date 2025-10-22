@@ -1,3 +1,4 @@
+
 // Глобально в начале файла
 let LOCAL_PLUGINS = [];
 
@@ -25,6 +26,9 @@ async function loadLocalPlugins() {
 
 // Рендер списка плагинов
 function renderPluginList(container, plugins) {
+
+    if (!container) return;
+
     container.innerHTML = "";
     plugins.forEach(plugin => {
         const el = document.createElement("div");
@@ -141,14 +145,18 @@ function isVersionCompatible(required, current) {
 // Инициализация вкладки плагинов
 export async function initPluginsMenu() {
     const containerPlugins = document.querySelector(".plugins-tab");
-    const containerPluginsMenu = document.querySelector(".plugins-list")
     const containerGitHub = document.querySelector(".github-tab");
 
-    // Загружаем локальные плагины + состояния из plugin-enable.json
+    if (!containerPlugins || !containerGitHub) {
+        console.error("Элементы плагинов не найдены!");
+        return;
+    }
+
+    // Загружаем локальные плагины + состояния
     LOCAL_PLUGINS = await loadLocalPlugins();
     renderPluginList(containerPlugins, LOCAL_PLUGINS);
 
-    // Загружаем плагины из GitHub
+    // Загружаем плагины с GitHub
     containerGitHub.innerHTML = "<p>Поиск плагинов на GitHub...</p>";
     try {
         const repos = await searchGitHubPlugins();

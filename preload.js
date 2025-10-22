@@ -2,7 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { loadPlugins } = require("./src/plugins/loadPlugins");
-
+const https = require("https");
 // Загружаем package.json
 const packagePath = path.join(__dirname, 'package.json');
 const packageData = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
@@ -20,7 +20,7 @@ contextBridge.exposeInMainWorld('appInfo', {
     name: packageData.name,
     version: packageData.version,
     description: packageData.description,
-    author: packageData.author,
+    author: `${packageData.author.name} <${packageData.author.email}>`,
     license: packageData.license,
   }),
 });
@@ -36,31 +36,27 @@ contextBridge.exposeInMainWorld("pluginAPI", {
 });
 
 window.addEventListener('DOMContentLoaded', () => {
-    // Передаем контекст окна (renderer) в loadPlugins
-    loadPlugins(window);
+    loadPlugins(window); // плагины сразу получают доступ к DOM
 });
 
-contextBridge.exposeInMainWorld("AccountApi", {
-  register: async (email, password) => {
-    const res = await fetch("http://localhost:3000/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
-    return res.json();
-  },
-  login: async (email, password) => {
-    const res = await fetch("http://localhost:3000/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
-    return res.json();
-  },
-  getMe: async () => {
-    const res = await fetch("http://localhost:3000/me", {
-      credentials: "include"
-    });
-    return res.json();
-  }
+
+contextBridge.exposeInMainWorld("download", {
+    downloadToAppFolder: (url, filename) => {
+        // Сохраняем в папку приложения рядом с preload.js / main.js
+        const appDir = __dirname; 
+        const dir = path.join(appDir, "downloads");
+
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+        const filePath = path.join(dir, filename);
+
+        const file = fs.createWriteStream(filePath);
+        https.get(url, (response) => {
+            response.pipe(file);
+            file.on("finish", () => {
+                file.close();
+                console.log(`Файл сохранён: ${filePath}`);
+            });
+        });
+    }
 });
