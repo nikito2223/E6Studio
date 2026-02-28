@@ -5,3 +5,5 @@ out/
 .env
 .DS_Store
 plugins/
+android-app/.gradle/
+android-app/app/build/
