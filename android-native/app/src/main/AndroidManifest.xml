@@ -10,6 +10,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.E6StudioAndroid">
         <activity
+            android:name=".ui.ViewerActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".ui.MainActivity"
             android:exported="true">
             <intent-filter>

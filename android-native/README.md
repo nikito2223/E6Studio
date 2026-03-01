@@ -1,6 +1,6 @@
 # E6 Studio Android (Native Kotlin)
 
-Это **полноценный нативный Android-проект** (не WebView, не Electron, не HTML/JS runtime).
+Это нативное Android-приложение (Kotlin + XML), сделанное по структуре web UI (sidebar/topbar/gallery/viewer) с аналогичным функционалом.
 
 ## Требования
 - Android Studio Iguana+ / Koala+
@@ -10,19 +10,23 @@
 
 ## Запуск
 1. Откройте папку `android-native` в Android Studio.
-2. Дождитесь Sync Gradle.
-3. Запустите `app` на устройстве/эмуляторе Android 8+.
+2. Выполните Gradle Sync.
+3. Запустите модуль `app` на Android 8+.
 
 ## Что реализовано
-- Kotlin + AndroidX
-- Экран ленты постов e621 (поиск по тегам)
-- Пагинация (пред/след страница)
-- Сетка карточек с превью, рейтингом, score, тегами
-- Сетевой слой на OkHttp
-- Загрузка изображений через Coil
+- Интерфейс по модели web-приложения:
+  - drawer sidebar (теги / фильтры / коллекции)
+  - topbar + вкладки: Популярное / Новое / Избранное / История
+  - галерея карточек
+  - viewer экран
+- Логика:
+  - e621 API загрузка
+  - поиск по тегам
+  - фильтрация по рейтингу
+  - избранное/история (SharedPreferences)
+  - инкогнито режим
 
-## Архитектура
-- `ui/MainActivity.kt` — основной экран
-- `ui/PostAdapter.kt` — RecyclerView адаптер
-- `network/E621Client.kt` — клиент e621 API
-- `model/PostItem.kt` — модель карточки
+## Оптимизация
+- `ListAdapter + DiffUtil`
+- Один background executor для сети
+- Лёгкие локальные хранилища
