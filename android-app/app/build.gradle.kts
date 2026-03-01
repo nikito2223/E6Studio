@@ -38,17 +38,20 @@ android {
 }
 
 dependencies {
-    // Зафиксированы версии, совместимые с AGP 8.5.2 / compileSdk 34
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.core:core:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
 
-    // Берём доступную GeckoView, но исключаем core/core-ktx, чтобы не подтягивать 1.17.0+
     implementation("org.mozilla.geckoview:geckoview:+") {
         exclude(group = "androidx.core", module = "core")
         exclude(group = "androidx.core", module = "core-ktx")
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk7")
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk8")
     }
+
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.24")
 
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-moshi:2.11.0")
@@ -60,9 +63,12 @@ dependencies {
     implementation("com.google.code.gson:gson:2.11.0")
 }
 
-configurations.all {
+configurations.configureEach {
     resolutionStrategy {
         force("androidx.core:core:1.13.1")
         force("androidx.core:core-ktx:1.13.1")
+        force("org.jetbrains.kotlin:kotlin-stdlib:1.9.24")
+        force("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.24")
+        force("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.24")
     }
 }
