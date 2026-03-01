@@ -2,6 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>E6 Studio</title>
 
   <link rel="stylesheet" type="text/css" href="style.css">
@@ -47,6 +48,7 @@
 
     <!-- Верхняя панель -->
     <header class="topbar">
+      <button class="mobile-sidebar-toggle" id="mobile-sidebar-toggle" aria-label="Открыть фильтры">☰</button>
       <div class="logo" data-i18n="header.logo">E6 Studio</div>
       <div class="menu">
         <button class="menu-btn active" data-tab="popular" data-i18n="header.popular">Популярное</button>
@@ -55,6 +57,8 @@
         <button class="menu-btn" data-tab="history" data-i18n="header.history">История</button>
       </div>
     </header>
+
+    <div class="mobile-sidebar-backdrop" id="mobile-sidebar-backdrop"></div>
 
     <!-- Просмотр карточки -->
     <div class="card-active hidden">
