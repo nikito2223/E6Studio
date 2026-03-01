@@ -1,7 +1,7 @@
 // API
 const E621_API = 'https://e621.net/posts.json';
 
-const infoApp = window.appInfo.get();
+const infoApp = window.appInfo?.get?.() || { name: 'e6studio-web', version: '2.4.0' };
 
 const USER_AGENT = `${infoApp.name}/${infoApp.version} (by rufik on e621)`;
 
@@ -249,7 +249,11 @@ export function renderGallery(data = galleryData) {
             downloadBtn.addEventListener("click", e => {
                 e.stopPropagation();
                 const filename = `${cardInfo.title}.${cardInfo.fileType}`;
-                window.download.downloadToAppFolder(cardInfo.url, filename);
+                if (window.download?.downloadToAppFolder) {
+                    window.download.downloadToAppFolder(cardInfo.url, filename);
+                } else {
+                    window.open(cardInfo.url, '_blank', 'noopener,noreferrer');
+                }
             });
         }
 

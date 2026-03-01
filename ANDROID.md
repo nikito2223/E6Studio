@@ -1,33 +1,48 @@
-# Android build (Capacitor)
+# Android build (Capacitor, Android 8+)
 
-В проект добавлена базовая конфигурация для Android через Capacitor.
+Проект подготовлен для упаковки JavaScript/HTML/CSS в Android-приложение через Capacitor.
 
 ## Что уже сделано
-- Добавлен конфиг `capacitor.config.ts`.
-- Добавлены npm-скрипты:
+- Добавлен `capacitor.config.ts`.
+- Добавлены скрипты для Android:
+  - `npm run android:add`
+  - `npm run android:android8`
   - `npm run android:sync`
   - `npm run android:open`
   - `npm run android:build`
+- Добавлен скрипт `scripts/set-android8-sdk.js`, который фиксирует SDK-параметры:
+  - `minSdkVersion = 26` (Android 8.0)
+  - `targetSdkVersion = 34`
+  - `compileSdkVersion = 34`
 
-## Как собрать APK/AAB
+## Сборка под Android 8+
 1. Установите зависимости:
    ```bash
    npm install
    ```
-2. Инициализируйте Android-проект:
+2. Создайте Android-проект (один раз):
    ```bash
-   npx cap add android
+   npm run android:add
+   ```
+3. Примените Android 8+ настройки SDK:
+   ```bash
+   npm run android:android8
+   ```
+4. Синхронизируйте web-ресурсы:
+   ```bash
    npm run android:sync
    ```
-3. Откройте в Android Studio:
+5. Откройте в Android Studio:
    ```bash
    npm run android:open
    ```
-4. В Android Studio выполните Build APK/AAB.
+6. В Android Studio: Build APK/AAB.
 
-## Что оптимизировано под мобильный UI
-- Добавлен адаптивный `viewport`.
-- Боковое меню стало выезжающим drawer на экранах до `900px`.
-- Добавлены кнопка вызова drawer и затемнённый backdrop.
-- Функциональная панель перенесена вниз в мобильном режиме.
-- Сетка галереи и отступы адаптированы под смартфоны.
+## Важный момент
+В web/android-среде нет Electron preload API. Поэтому добавлены безопасные fallback-ветки для:
+- `window.appInfo`
+- `window.pluginAPI`
+- `window.download`
+- `window.electronAPI`
+
+Это позволяет запускать интерфейс как обычное Android WebView-приложение без падений.

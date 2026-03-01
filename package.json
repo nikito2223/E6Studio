@@ -7,9 +7,11 @@
     "start": "electron .",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
-    "android:sync": "npx cap sync android",
+    "android:sync": "npm run android:android8 && npx cap sync android",
     "android:open": "npx cap open android",
-    "android:build": "npm run android:sync && npm run android:open"
+    "android:build": "npm run android:sync && npm run android:open",
+    "android:add": "npx cap add android",
+    "android:android8": "node scripts/set-android8-sdk.js"
   },
   "build": {
     "appId": "com.e6studio.app",

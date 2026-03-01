@@ -2,14 +2,23 @@
 // Глобально в начале файла
 let LOCAL_PLUGINS = [];
 
-const APP_VERSION = window.appInfo.get().version;
+
+const appInfo = window.appInfo?.get?.() || { version: '2.4.0' };
+const pluginAPI = window.pluginAPI || {
+    async getLocalPlugins() { return []; },
+    async getPluginsEnabled() { return {}; },
+    async setPluginEnabled() { return { success: false }; },
+    async installPlugin() { throw new Error('Plugin API недоступен в web/android сборке'); }
+};
+
+const APP_VERSION = appInfo.version;
 const GITHUB_TAG = "E6-Plugin";
 
 // Загружаем список локальных плагинов через preload
 async function loadLocalPlugins() {
     try {
-        const plugins = await window.pluginAPI.getLocalPlugins();
-        const enabledState = await window.pluginAPI.getPluginsEnabled();
+        const plugins = await pluginAPI.getLocalPlugins();
+        const enabledState = await pluginAPI.getPluginsEnabled();
 
         // Добавляем поле enabled из файла plugin-enable.json
         return plugins.map(plugin => {
@@ -60,7 +69,7 @@ function renderPluginList(container, plugins) {
             toggle.addEventListener("change", async e => {
                 plugin.enabled = e.target.checked;
                 const folderName = plugin.folder || plugin.name;
-                await window.pluginAPI.setPluginEnabled(folderName, plugin.enabled);
+                await pluginAPI.setPluginEnabled(folderName, plugin.enabled);
                 console.log(`Плагин ${plugin.name} ${plugin.enabled ? "включен" : "выключен"}`);
             });
 
@@ -81,7 +90,7 @@ function renderPluginList(container, plugins) {
 
             installBtn.addEventListener("click", async () => {
                 try {
-                    const installedPlugin = await window.pluginAPI.installPlugin(plugin);
+                    const installedPlugin = await pluginAPI.installPlugin(plugin);
                     installedPlugin.enabled = false; // по умолчанию выключен
                     installedPlugin.installed = true;
                     LOCAL_PLUGINS.push(installedPlugin);
