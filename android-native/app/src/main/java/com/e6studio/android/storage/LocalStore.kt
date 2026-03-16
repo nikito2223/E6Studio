@@ -53,4 +53,24 @@ class LocalStore(context: Context) {
     fun setBlacklistTags(tags: Set<String>) {
         prefs.edit().putStringSet("blacklist_tags", tags.map { it.trim() }.filter { it.isNotBlank() }.toSet()).apply()
     }
+
+    fun appPassword(): String = prefs.getString("app_password", "") ?: ""
+    fun setAppPassword(value: String) = prefs.edit().putString("app_password", value.trim()).apply()
+
+    fun pluginEnabledMap(): MutableMap<String, Boolean> {
+        val raw = prefs.getStringSet("plugins_enabled", emptySet()).orEmpty()
+        val map = mutableMapOf<String, Boolean>()
+        raw.forEach {
+            val parts = it.split(":", limit = 2)
+            if (parts.size == 2) map[parts[0]] = parts[1] == "1"
+        }
+        return map
+    }
+
+    fun setPluginEnabled(name: String, enabled: Boolean) {
+        val map = pluginEnabledMap()
+        map[name] = enabled
+        val raw = map.entries.map { "${it.key}:${if (it.value) 1 else 0}" }.toSet()
+        prefs.edit().putStringSet("plugins_enabled", raw).apply()
+    }
 }

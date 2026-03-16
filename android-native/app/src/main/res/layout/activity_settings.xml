@@ -66,6 +66,22 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
+            android:text="Пароль аварийной блокировки"
+            android:textColor="#56D8C9" />
+
+        <EditText
+            android:id="@+id/passwordInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Введите пароль"
+            android:inputType="textPassword"
+            android:textColor="#E8F1F7"
+            android:textColorHint="#8EA4B6" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
             android:text="Blacklist теги (через запятую)"
             android:textColor="#56D8C9" />
 
@@ -79,6 +95,13 @@
             android:padding="10dp"
             android:textColor="#E8F1F7"
             android:textColorHint="#8EA4B6" />
+
+        <Button
+            android:id="@+id/pluginsBtn"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="12dp"
+            android:text="Плагины" />
 
         <LinearLayout
             android:layout_width="match_parent"

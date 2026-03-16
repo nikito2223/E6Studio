@@ -1,5 +1,6 @@
 package com.e6studio.android.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
@@ -27,6 +28,11 @@ class SettingsActivity : AppCompatActivity() {
         binding.maxRatingSpinner.setSelection(ratings.indexOf(localStore.maxRating()).coerceAtLeast(0))
         binding.incognitoSwitch.isChecked = localStore.isIncognito()
         binding.blacklistInput.setText(localStore.blacklistTags().joinToString(", "))
+        binding.passwordInput.setText(localStore.appPassword())
+
+        binding.pluginsBtn.setOnClickListener {
+            startActivity(Intent(this, PluginsActivity::class.java))
+        }
 
         binding.saveBtn.setOnClickListener {
             localStore.setTheme(themes[binding.themeSpinner.selectedItemPosition])
@@ -39,6 +45,7 @@ class SettingsActivity : AppCompatActivity() {
                 .filter { it.isNotBlank() }
                 .toSet()
             localStore.setBlacklistTags(tags)
+            localStore.setAppPassword(binding.passwordInput.text?.toString().orEmpty())
 
             setResult(RESULT_OK)
             finish()
