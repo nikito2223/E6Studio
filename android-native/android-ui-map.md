@@ -21,3 +21,5 @@
 - `ListAdapter + DiffUtil` в карточках
 - фоновые сетевые запросы через single-thread executor
 - простые локальные структуры без тяжёлых ORM/DB
+
+- настройки: theme / max rating / blacklist / incognito

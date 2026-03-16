@@ -25,6 +25,7 @@
   - фильтрация по рейтингу
   - избранное/история (SharedPreferences)
   - инкогнито режим
+  - настройки: тема, max rating, blacklist тегов
 
 ## Оптимизация
 - `ListAdapter + DiffUtil`

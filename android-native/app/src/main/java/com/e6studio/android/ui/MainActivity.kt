@@ -2,6 +2,11 @@ package com.e6studio.android.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.text.Editable
+import android.text.TextWatcher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.core.view.isVisible
@@ -24,6 +29,17 @@ class MainActivity : AppCompatActivity() {
     private var currentTags = "order:score"
     private var selectedTab = "popular"
     private var allPosts: List<PostItem> = emptyList()
+    private var allTagsCache: List<String> = emptyList()
+    private var selectedSidebarFilter = "Все"
+
+    private val debounceHandler = Handler(Looper.getMainLooper())
+    private var sidebarDebounceRunnable: Runnable? = null
+
+    private val settingsLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        applyThemeUi(localStore.theme())
+        updateIncognitoUi(localStore.isIncognito())
+        refreshDerivedViews(allPosts)
+    }
 
     private val adapter = PostAdapter(
         onClick = { item ->
@@ -44,27 +60,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val filtersAdapter = StringListAdapter { filter ->
-        val filtered = when (filter) {
-            "Все" -> allPosts
-            "Safe" -> allPosts.filter { it.rating == "s" }
-            "Questionable" -> allPosts.filter { it.rating == "q" }
-            "Explicit" -> allPosts.filter { it.rating == "e" }
-            else -> allPosts
-        }
-        adapter.submitList(filtered)
+        selectedSidebarFilter = filter
+        applyAllFiltersAndRender()
     }
 
     private val collectionsAdapter = StringListAdapter { collection ->
-        when (collection) {
-            "Избранное" -> {
-                val fav = localStore.favorites()
-                adapter.submitList(allPosts.filter { fav.contains(it.id) })
-            }
-            "История" -> {
-                val history = localStore.history().toSet()
-                adapter.submitList(allPosts.filter { history.contains(it.id) })
-            }
+        selectedTab = when (collection) {
+            "Избранное" -> "favorites"
+            "История" -> "history"
+            else -> selectedTab
         }
+        applyAllFiltersAndRender()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,6 +80,7 @@ class MainActivity : AppCompatActivity() {
         localStore = LocalStore(this)
 
         setupUi()
+        applyThemeUi(localStore.theme())
         loadPosts()
     }
 
@@ -102,6 +109,16 @@ class MainActivity : AppCompatActivity() {
             loadPosts()
         }
 
+        binding.sidebarSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            override fun afterTextChanged(s: Editable?) {
+                sidebarDebounceRunnable?.let(debounceHandler::removeCallbacks)
+                sidebarDebounceRunnable = Runnable { filterTagList(s?.toString().orEmpty()) }
+                debounceHandler.postDelayed(sidebarDebounceRunnable!!, 180)
+            }
+        })
+
         binding.menuPopular.setOnClickListener { selectTab("popular") }
         binding.menuNew.setOnClickListener { selectTab("new") }
         binding.menuFavorites.setOnClickListener { selectTab("favorites") }
@@ -119,7 +136,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.openSidebarBtn.setOnClickListener { binding.drawerLayout.openDrawer(GravityCompat.START) }
-        binding.settingsBtn.setOnClickListener { binding.drawerLayout.openDrawer(GravityCompat.START) }
+        binding.settingsBtn.setOnClickListener {
+            settingsLauncher.launch(Intent(this, SettingsActivity::class.java))
+        }
 
         updateIncognitoUi(localStore.isIncognito())
         binding.incognitoBtn.setOnClickListener {
@@ -139,26 +158,21 @@ class MainActivity : AppCompatActivity() {
         when (tab) {
             "popular" -> currentTags = "order:score"
             "new" -> currentTags = "order:id_desc"
-            "favorites", "history" -> { /* local filtering */ }
+            "favorites", "history" -> {
+                applyAllFiltersAndRender()
+                return
+            }
         }
 
         currentPage = 1
-        if (tab == "favorites") {
-            val fav = localStore.favorites()
-            adapter.submitList(allPosts.filter { fav.contains(it.id) })
-        } else if (tab == "history") {
-            val history = localStore.history().toSet()
-            adapter.submitList(allPosts.filter { history.contains(it.id) })
-        } else {
-            loadPosts()
-        }
+        loadPosts()
     }
 
     private fun loadPosts() {
         binding.progress.isVisible = true
         binding.pageLabel.text = currentPage.toString()
 
-        val tags = if (selectedTab == "popular" || selectedTab == "new") currentTags else currentTags
+        val tags = currentTags
         networkExecutor.execute {
             runCatching { e621Client.loadPosts(tags, currentPage) }
                 .onSuccess { posts -> runOnUiThread { refreshDerivedViews(posts) } }
@@ -176,37 +190,83 @@ class MainActivity : AppCompatActivity() {
         allPosts = posts
         binding.progress.isVisible = false
 
-        val uniqueTags = posts.asSequence()
+        allTagsCache = posts.asSequence()
             .flatMap { it.tags.asSequence() }
             .distinct()
-            .take(200)
+            .sorted()
+            .take(250)
             .toList()
-        tagsAdapter.submit(uniqueTags)
+        filterTagList(binding.sidebarSearch.text?.toString().orEmpty())
 
         adapter.setFavorites(localStore.favorites())
+        applyAllFiltersAndRender()
+    }
 
-        val out = when (selectedTab) {
+    private fun applyAllFiltersAndRender() {
+        val maxRating = localStore.maxRating()
+        val maxOrder = ratingOrder(maxRating)
+        val blacklist = localStore.blacklistTags()
+
+        var list = allPosts.filter { ratingOrder(it.rating) <= maxOrder }
+        if (blacklist.isNotEmpty()) {
+            list = list.filter { post -> post.tags.none { tag -> blacklist.contains(tag) } }
+        }
+
+        list = when (selectedSidebarFilter) {
+            "Safe" -> list.filter { it.rating == "s" }
+            "Questionable" -> list.filter { it.rating == "q" }
+            "Explicit" -> list.filter { it.rating == "e" }
+            else -> list
+        }
+
+        list = when (selectedTab) {
             "favorites" -> {
                 val fav = localStore.favorites()
-                posts.filter { fav.contains(it.id) }
+                list.filter { fav.contains(it.id) }
             }
             "history" -> {
                 val h = localStore.history().toSet()
-                posts.filter { h.contains(it.id) }
+                list.filter { h.contains(it.id) }
             }
-            else -> posts
+            else -> list
         }
 
-        binding.emptyView.isVisible = out.isEmpty()
-        adapter.submitList(out)
+        binding.emptyView.isVisible = list.isEmpty()
+        adapter.submitList(list)
+    }
+
+    private fun filterTagList(query: String) {
+        val q = query.trim().lowercase()
+        val list = if (q.isBlank()) allTagsCache else allTagsCache.filter { it.lowercase().contains(q) }
+        tagsAdapter.submit(list)
+    }
+
+    private fun ratingOrder(rating: String): Int = when (rating.lowercase()) {
+        "s" -> 0
+        "q" -> 1
+        "e" -> 2
+        else -> 2
     }
 
     private fun updateIncognitoUi(enabled: Boolean) {
         binding.incognitoBtn.alpha = if (enabled) 1f else 0.5f
     }
 
+    private fun applyThemeUi(theme: String) {
+        val (mainBg, drawerBg) = when (theme) {
+            "light" -> Pair(0xFFF6F8FB.toInt(), 0xFFFFFFFF.toInt())
+            "blue" -> Pair(0xFF071833.toInt(), 0xFF0C2A47.toInt())
+            "red" -> Pair(0xFF090607.toInt(), 0xFF15080A.toInt())
+            else -> Pair(0xFF07111A.toInt(), 0xFF0D1B26.toInt())
+        }
+        binding.root.setBackgroundColor(mainBg)
+        binding.mainRoot.setBackgroundColor(mainBg)
+        binding.sidebarRoot.setBackgroundColor(drawerBg)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+        sidebarDebounceRunnable?.let(debounceHandler::removeCallbacks)
         networkExecutor.shutdownNow()
     }
 }

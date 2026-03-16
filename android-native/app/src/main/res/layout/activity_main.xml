@@ -6,6 +6,7 @@
     android:background="#07111A">
 
     <LinearLayout
+        android:id="@+id/mainRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
@@ -191,6 +192,7 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/sidebarRoot"
         android:layout_width="320dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"

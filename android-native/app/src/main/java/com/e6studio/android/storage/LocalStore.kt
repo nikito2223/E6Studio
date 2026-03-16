@@ -38,4 +38,19 @@ class LocalStore(context: Context) {
 
     fun isIncognito(): Boolean = prefs.getBoolean("incognito", false)
     fun setIncognito(value: Boolean) = prefs.edit().putBoolean("incognito", value).apply()
+
+    fun theme(): String = prefs.getString("theme", "dark") ?: "dark"
+    fun setTheme(value: String) = prefs.edit().putString("theme", value).apply()
+
+    fun maxRating(): String = prefs.getString("max_rating", "e") ?: "e"
+    fun setMaxRating(value: String) = prefs.edit().putString("max_rating", value).apply()
+
+    fun blacklistTags(): MutableSet<String> = prefs.getStringSet("blacklist_tags", emptySet())
+        ?.map { it.trim() }
+        ?.filter { it.isNotBlank() }
+        ?.toMutableSet() ?: mutableSetOf()
+
+    fun setBlacklistTags(tags: Set<String>) {
+        prefs.edit().putStringSet("blacklist_tags", tags.map { it.trim() }.filter { it.isNotBlank() }.toSet()).apply()
+    }
 }
