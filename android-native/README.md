@@ -31,3 +31,6 @@
 - `ListAdapter + DiffUtil`
 - Один background executor для сети
 - Лёгкие локальные хранилища
+
+- поддержка видео (webm/mp4) во viewer
+- скачивание фото/видео в Downloads

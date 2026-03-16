@@ -23,3 +23,6 @@
 - простые локальные структуры без тяжёлых ORM/DB
 
 - настройки: theme / max rating / blacklist / incognito
+
+- поддержка видео (webm/mp4) во viewer
+- скачивание фото/видео в Downloads

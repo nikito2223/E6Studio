@@ -45,6 +45,7 @@ class E621Client {
                     id = post.getLong("id"),
                     previewUrl = preview?.optString("url").orEmpty().ifBlank { file.optString("url") },
                     fileUrl = file.optString("url"),
+                    fileExt = file.optString("ext", "jpg"),
                     rating = post.optString("rating", "u"),
                     score = post.optJSONObject("score")?.optInt("up") ?: 0,
                     tags = tags,

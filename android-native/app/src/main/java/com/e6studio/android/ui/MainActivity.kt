@@ -1,6 +1,7 @@
 package com.e6studio.android.ui
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -253,15 +254,44 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun applyThemeUi(theme: String) {
-        val (mainBg, drawerBg) = when (theme) {
-            "light" -> Pair(0xFFF6F8FB.toInt(), 0xFFFFFFFF.toInt())
-            "blue" -> Pair(0xFF071833.toInt(), 0xFF0C2A47.toInt())
-            "red" -> Pair(0xFF090607.toInt(), 0xFF15080A.toInt())
-            else -> Pair(0xFF07111A.toInt(), 0xFF0D1B26.toInt())
+        val palette = when (theme) {
+            "light" -> Palette("#F6F8FB", "#FFFFFF", "#0B1B26", "#334E63", "#6C5CE7")
+            "blue" -> Palette("#071833", "#0C2A47", "#EAF6FF", "#BCDFF6", "#5AA7FF")
+            "red" -> Palette("#090607", "#15080A", "#FFF5F4", "#F0D8D7", "#E85A4F")
+            else -> Palette("#07111A", "#0D1B26", "#E8F1F7", "#B9C8D3", "#2EC4B6")
         }
+
+        val mainBg = Color.parseColor(palette.mainBg)
+        val drawerBg = Color.parseColor(palette.drawerBg)
+        val textPrimary = Color.parseColor(palette.textPrimary)
+        val textSecondary = Color.parseColor(palette.textSecondary)
+        val accent = Color.parseColor(palette.accent)
+
         binding.root.setBackgroundColor(mainBg)
         binding.mainRoot.setBackgroundColor(mainBg)
         binding.sidebarRoot.setBackgroundColor(drawerBg)
+
+        binding.searchInput.setTextColor(textPrimary)
+        binding.searchInput.setHintTextColor(textSecondary)
+        binding.sidebarSearch.setTextColor(textPrimary)
+        binding.sidebarSearch.setHintTextColor(textSecondary)
+
+        binding.pageLabel.setTextColor(textPrimary)
+        binding.emptyView.setTextColor(textPrimary)
+
+        binding.searchButton.setBackgroundColor(accent)
+        binding.prevPageBtn.setBackgroundColor(accent)
+        binding.nextPageBtn.setBackgroundColor(accent)
+
+        binding.menuPopular.setTextColor(textPrimary)
+        binding.menuNew.setTextColor(textPrimary)
+        binding.menuFavorites.setTextColor(textPrimary)
+        binding.menuHistory.setTextColor(textPrimary)
+
+        adapter.setTheme(theme)
+        tagsAdapter.setTheme(theme)
+        filtersAdapter.setTheme(theme)
+        collectionsAdapter.setTheme(theme)
     }
 
     override fun onDestroy() {
@@ -269,4 +299,12 @@ class MainActivity : AppCompatActivity() {
         sidebarDebounceRunnable?.let(debounceHandler::removeCallbacks)
         networkExecutor.shutdownNow()
     }
+
+    data class Palette(
+        val mainBg: String,
+        val drawerBg: String,
+        val textPrimary: String,
+        val textSecondary: String,
+        val accent: String
+    )
 }
