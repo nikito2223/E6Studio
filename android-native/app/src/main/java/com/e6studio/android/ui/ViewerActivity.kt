@@ -1,28 +1,36 @@
 package com.e6studio.android.ui
 
 import android.app.AlertDialog
-import android.app.DownloadManager
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.text.InputType
 import android.view.View
 import android.widget.EditText
 import android.widget.MediaController
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import coil.ImageLoader
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
 import coil.load
 import com.e6studio.android.R
 import com.e6studio.android.databinding.ActivityViewerBinding
 import com.e6studio.android.model.PostItem
 import com.e6studio.android.storage.LocalStore
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.io.File
+import java.io.FileOutputStream
+import java.util.concurrent.Executors
 
 class ViewerActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityViewerBinding
     private lateinit var localStore: LocalStore
     private var post: PostItem? = null
+    private val downloadExecutor = Executors.newSingleThreadExecutor()
+    private val httpClient = OkHttpClient()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,30 +44,11 @@ class ViewerActivity : AppCompatActivity() {
             return
         }
 
-        if (item.isVideo) {
-            binding.viewerImage.visibility = View.GONE
-            binding.viewerVideo.visibility = View.VISIBLE
-
-            val mediaController = MediaController(this)
-            mediaController.setAnchorView(binding.viewerVideo)
-            binding.viewerVideo.setMediaController(mediaController)
-            binding.viewerVideo.setVideoURI(Uri.parse(item.fileUrl))
-            binding.viewerVideo.setOnPreparedListener {
-                it.isLooping = true
-                binding.viewerVideo.start()
-            }
-        } else {
-            binding.viewerVideo.visibility = View.GONE
-            binding.viewerImage.visibility = View.VISIBLE
-            binding.viewerImage.load(item.fileUrl.ifBlank { item.previewUrl }) {
-                placeholder(R.drawable.placeholder_bg)
-                error(R.drawable.placeholder_bg)
-            }
-        }
+        showMedia(item)
 
         binding.description.text = item.description.ifBlank { "Описание отсутствует" }
         binding.tags.text = item.tagsText
-        binding.stats.text = "ID #${item.id} · ${item.rating.uppercase()} · ❤ ${item.score}"
+        binding.stats.text = "ID #${item.id} · ${item.rating.uppercase()} · ❤ ${item.score} · ${item.fileExt.uppercase()}"
 
         renderFav(localStore.favorites().contains(item.id))
 
@@ -68,9 +57,54 @@ class ViewerActivity : AppCompatActivity() {
             renderFav(added)
         }
 
-        binding.downloadBtn.setOnClickListener { enqueueDownload(item) }
+        binding.downloadBtn.setOnClickListener { saveIntoAppDownloads(item) }
         binding.panicBtn.setOnClickListener { showEmergencyLock() }
         binding.closeBtn.setOnClickListener { finish() }
+    }
+
+    private fun showMedia(item: PostItem) {
+        when {
+            item.isVideo -> {
+                binding.viewerImage.visibility = View.GONE
+                binding.viewerVideo.visibility = View.VISIBLE
+                binding.downloadStatusText.text = "Видео: ${item.fileExt.uppercase()}"
+
+                val mediaController = MediaController(this)
+                mediaController.setAnchorView(binding.viewerVideo)
+                binding.viewerVideo.setMediaController(mediaController)
+                binding.viewerVideo.setVideoURI(Uri.parse(item.fileUrl))
+                binding.viewerVideo.setOnPreparedListener {
+                    it.isLooping = true
+                    binding.viewerVideo.start()
+                }
+            }
+            item.isImage -> {
+                binding.viewerVideo.visibility = View.GONE
+                binding.viewerImage.visibility = View.VISIBLE
+                binding.downloadStatusText.text = if (item.isGif) "GIF анимация" else "Изображение: ${item.fileExt.uppercase()}"
+
+                val imageLoader = ImageLoader.Builder(this)
+                    .components {
+                        add(ImageDecoderDecoder.Factory())
+                        add(GifDecoder.Factory())
+                    }
+                    .build()
+
+                binding.viewerImage.load(item.fileUrl.ifBlank { item.previewUrl }, imageLoader) {
+                    placeholder(R.drawable.placeholder_bg)
+                    error(R.drawable.placeholder_bg)
+                }
+            }
+            else -> {
+                binding.viewerVideo.visibility = View.GONE
+                binding.viewerImage.visibility = View.VISIBLE
+                binding.viewerImage.load(item.previewUrl) {
+                    placeholder(R.drawable.placeholder_bg)
+                    error(R.drawable.placeholder_bg)
+                }
+                binding.downloadStatusText.text = "Предпросмотр недоступен для ${item.fileExt.uppercase()}, но файл можно скачать"
+            }
+        }
     }
 
     override fun onPause() {
@@ -80,30 +114,42 @@ class ViewerActivity : AppCompatActivity() {
         }
     }
 
-    private fun enqueueDownload(item: PostItem) {
+    private fun saveIntoAppDownloads(item: PostItem) {
         val fileName = "e6_${item.id}.${item.fileExt.ifBlank { "jpg" }}"
-        val request = DownloadManager.Request(Uri.parse(item.fileUrl))
-            .setTitle(fileName)
-            .setDescription("Скачивание из E6 Studio")
-            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
-            .setAllowedOverMetered(true)
-            .setAllowedOverRoaming(true)
-
-        val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        dm.enqueue(request)
+        val downloadsDir = File(filesDir, "downloads").apply { mkdirs() }
+        val target = File(downloadsDir, fileName)
 
         binding.downloadStatusIcon.visibility = View.VISIBLE
         binding.downloadProgress.visibility = View.VISIBLE
-        binding.downloadStatusText.text = "Скачивается: $fileName"
+        binding.downloadStatusIcon.setImageResource(android.R.drawable.stat_sys_download)
+        binding.downloadStatusText.text = "Скачивается в ${target.absolutePath}"
 
-        binding.downloadStatusText.postDelayed({
-            binding.downloadProgress.visibility = View.GONE
-            binding.downloadStatusIcon.setImageResource(android.R.drawable.stat_sys_download_done)
-            binding.downloadStatusText.text = "Скачивание запущено"
-        }, 1800)
-
-        Toast.makeText(this, "Скачивание начато: $fileName", Toast.LENGTH_SHORT).show()
+        downloadExecutor.execute {
+            runCatching {
+                val request = Request.Builder().url(item.fileUrl).build()
+                httpClient.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) error("HTTP ${response.code}")
+                    val body = response.body ?: error("Пустой ответ")
+                    FileOutputStream(target).use { out ->
+                        body.byteStream().copyTo(out)
+                    }
+                }
+            }.onSuccess {
+                runOnUiThread {
+                    binding.downloadProgress.visibility = View.GONE
+                    binding.downloadStatusIcon.setImageResource(android.R.drawable.stat_sys_download_done)
+                    binding.downloadStatusText.text = "Сохранено: ${target.absolutePath}"
+                    Toast.makeText(this, "Сохранено в папку приложения /files/downloads", Toast.LENGTH_LONG).show()
+                }
+            }.onFailure { err ->
+                runOnUiThread {
+                    binding.downloadProgress.visibility = View.GONE
+                    binding.downloadStatusIcon.setImageResource(android.R.drawable.stat_notify_error)
+                    binding.downloadStatusText.text = "Ошибка скачивания: ${err.message}"
+                    Toast.makeText(this, "Ошибка скачивания", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
     }
 
     private fun showEmergencyLock() {
@@ -113,7 +159,7 @@ class ViewerActivity : AppCompatActivity() {
             return
         }
 
-        binding.viewerVideo.pause()
+        if (binding.viewerVideo.visibility == View.VISIBLE) binding.viewerVideo.pause()
         val input = EditText(this)
         input.hint = "Введите пароль"
         input.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
@@ -144,5 +190,10 @@ class ViewerActivity : AppCompatActivity() {
 
     private fun renderFav(enabled: Boolean) {
         binding.favoriteBtn.text = if (enabled) "★ Избранное" else "☆ В избранное"
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        downloadExecutor.shutdownNow()
     }
 }

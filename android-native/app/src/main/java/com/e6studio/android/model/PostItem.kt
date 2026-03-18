@@ -14,4 +14,7 @@ data class PostItem(
 ) : Serializable {
     val tagsText: String get() = tags.take(8).joinToString(" ") { "#$it" }
     val isVideo: Boolean get() = fileExt.equals("webm", true) || fileExt.equals("mp4", true)
+    val isGif: Boolean get() = fileExt.equals("gif", true)
+    val isImage: Boolean get() = fileExt.lowercase() in setOf("jpg", "jpeg", "png", "webp", "gif", "bmp")
+    val isPreviewable: Boolean get() = isVideo || isImage
 }
