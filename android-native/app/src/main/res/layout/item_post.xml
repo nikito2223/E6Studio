@@ -4,19 +4,39 @@
     android:layout_height="wrap_content"
     android:layout_margin="6dp"
     android:background="@drawable/post_item_bg"
+    android:elevation="2dp"
     android:orientation="vertical"
     android:padding="8dp">
 
-    <ImageView
-        android:id="@+id/preview"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="180dp"
-        android:scaleType="centerCrop" />
+        android:layout_height="184dp">
+
+        <ImageView
+            android:id="@+id/preview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop" />
+
+        <TextView
+            android:id="@+id/typeBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:layout_margin="8dp"
+            android:background="@drawable/post_item_bg"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:text="IMG"
+            android:textColor="@color/app_primary_text"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="8dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
@@ -25,7 +45,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="#E8F1F7"
+            android:textColor="@color/app_primary_text"
             android:textStyle="bold" />
 
         <Button
@@ -42,5 +62,5 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:maxLines="2"
-        android:textColor="#B9C8D3" />
+        android:textColor="@color/app_secondary_text" />
 </LinearLayout>

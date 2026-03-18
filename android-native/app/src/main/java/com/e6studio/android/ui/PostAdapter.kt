@@ -62,12 +62,18 @@ class PostAdapter(
             binding.root.setBackgroundColor(cardBg)
             binding.title.setTextColor(textPrimary)
             binding.tags.setTextColor(textSecondary)
+            binding.typeBadge.setTextColor(textPrimary)
 
-            val videoMark = if (item.isVideo) " 🎬" else ""
-            binding.title.text = "#${item.id} • ${item.rating.uppercase()} • ❤ ${item.score}$videoMark"
+            val badge = when {
+                item.isVideo -> "VIDEO"
+                item.isGif -> "GIF"
+                else -> "IMG"
+            }
+            binding.typeBadge.text = badge
+            binding.title.text = "#${item.id} • ${item.rating.uppercase()} • ❤ ${item.score}"
             binding.tags.text = item.tagsText.ifBlank { binding.root.context.getString(R.string.no_tags) }
             binding.favoriteBtn.text = if (isFavorite) "★" else "☆"
-            binding.preview.load(item.previewUrl) {
+            binding.preview.load(item.previewUrl.ifBlank { item.sampleUrl.ifBlank { item.fileUrl } }) {
                 crossfade(true)
                 placeholder(R.drawable.placeholder_bg)
                 error(R.drawable.placeholder_bg)

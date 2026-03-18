@@ -2,11 +2,13 @@ package com.e6studio.android.ui
 
 import android.content.Intent
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
@@ -17,6 +19,7 @@ import com.e6studio.android.databinding.ActivityMainBinding
 import com.e6studio.android.model.PostItem
 import com.e6studio.android.network.E621Client
 import com.e6studio.android.storage.LocalStore
+import com.e6studio.android.util.NetworkUtils
 import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
@@ -27,8 +30,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var localStore: LocalStore
 
     private var currentPage = 1
-    private var currentTags = "order:score"
-    private var selectedTab = "popular"
+    private var currentTags = ""
+    private var selectedTab = "home"
     private var allPosts: List<PostItem> = emptyList()
     private var allTagsCache: List<String> = emptyList()
     private var selectedSidebarFilter = "Все"
@@ -54,6 +57,7 @@ class MainActivity : AppCompatActivity() {
     )
 
     private val tagsAdapter = StringListAdapter { tag ->
+        binding.searchInput.setText(tag)
         currentTags = tag
         currentPage = 1
         binding.drawerLayout.closeDrawer(GravityCompat.START)
@@ -82,12 +86,23 @@ class MainActivity : AppCompatActivity() {
 
         setupUi()
         applyThemeUi(localStore.theme())
-        loadPosts()
+        updateConnectivityBanner()
+        handleIntent(intent, initial = true)
+        if (selectedTab == "home") {
+            renderHomeState()
+        }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent, initial = false)
     }
 
     override fun onResume() {
         super.onResume()
         adapter.setFavorites(localStore.favorites())
+        updateConnectivityBanner()
     }
 
     private fun setupUi() {
@@ -104,10 +119,10 @@ class MainActivity : AppCompatActivity() {
         filtersAdapter.submit(listOf("Все", "Safe", "Questionable", "Explicit"))
         collectionsAdapter.submit(listOf("Избранное", "История"))
 
-        binding.searchButton.setOnClickListener {
-            currentTags = binding.searchInput.text?.toString()?.trim().orEmpty().ifBlank { currentTags }
-            currentPage = 1
-            loadPosts()
+        binding.searchButton.setOnClickListener { handleSearchAction() }
+        binding.retryConnectionBtn.setOnClickListener {
+            updateConnectivityBanner()
+            if (selectedTab != "home") loadPosts() else renderHomeState()
         }
 
         binding.sidebarSearch.addTextChangedListener(object : TextWatcher {
@@ -124,6 +139,10 @@ class MainActivity : AppCompatActivity() {
         binding.menuNew.setOnClickListener { selectTab("new") }
         binding.menuFavorites.setOnClickListener { selectTab("favorites") }
         binding.menuHistory.setOnClickListener { selectTab("history") }
+
+        binding.quickPopularBtn.setOnClickListener { selectTab("popular") }
+        binding.quickNewBtn.setOnClickListener { selectTab("new") }
+        binding.quickFavoritesBtn.setOnClickListener { selectTab("favorites") }
 
         binding.prevPageBtn.setOnClickListener {
             if (currentPage > 1) {
@@ -149,6 +168,74 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun handleIntent(intent: Intent?, initial: Boolean) {
+        val data = intent?.data
+        if (data != null && data.host?.contains("e621.net") == true) {
+            openDeepLink(data)
+            return
+        }
+
+        if (!initial) return
+        selectedTab = "home"
+    }
+
+    private fun openDeepLink(uri: Uri) {
+        val idFromPath = uri.pathSegments.firstOrNull { it.toLongOrNull() != null }?.toLongOrNull()
+        if (idFromPath != null) {
+            openPostFromLink(idFromPath)
+            return
+        }
+
+        val tags = uri.getQueryParameter("tags").orEmpty().trim()
+        if (tags.isNotBlank()) {
+            binding.searchInput.setText(tags)
+            currentTags = tags
+            currentPage = 1
+            selectedTab = "popular"
+            loadPosts()
+            return
+        }
+
+        renderHomeState(message = "Ссылка открыта в E6Studio. Напишите теги или выберите быстрый режим.")
+    }
+
+    private fun openPostFromLink(postId: Long) {
+        if (!NetworkUtils.isOnline(this)) {
+            updateConnectivityBanner()
+            Toast.makeText(this, "Нет интернета для открытия поста", Toast.LENGTH_LONG).show()
+            return
+        }
+        binding.progress.isVisible = true
+        binding.emptyView.isVisible = false
+        networkExecutor.execute {
+            runCatching { e621Client.loadPost(postId) }
+                .onSuccess { post ->
+                    runOnUiThread {
+                        binding.progress.isVisible = false
+                        startActivity(Intent(this, ViewerActivity::class.java).putExtra("post", post))
+                    }
+                }
+                .onFailure { err ->
+                    runOnUiThread {
+                        binding.progress.isVisible = false
+                        binding.emptyView.isVisible = true
+                        binding.emptyView.text = "Не удалось открыть ссылку: ${err.message}"
+                    }
+                }
+        }
+    }
+
+    private fun handleSearchAction() {
+        val query = binding.searchInput.text?.toString()?.trim().orEmpty()
+        if (query.startsWith("http://") || query.startsWith("https://")) {
+            openDeepLink(Uri.parse(query))
+            return
+        }
+        currentTags = query
+        currentPage = 1
+        loadPosts()
+    }
+
     private fun selectTab(tab: String) {
         selectedTab = tab
         binding.menuPopular.isChecked = tab == "popular"
@@ -157,23 +244,65 @@ class MainActivity : AppCompatActivity() {
         binding.menuHistory.isChecked = tab == "history"
 
         when (tab) {
-            "popular" -> currentTags = "order:score"
-            "new" -> currentTags = "order:id_desc"
-            "favorites", "history" -> {
-                applyAllFiltersAndRender()
-                return
+            "popular" -> {
+                currentTags = binding.searchInput.text?.toString()?.trim().orEmpty().ifBlank { "order:score" }
+                currentPage = 1
+                loadPosts()
             }
+            "new" -> {
+                currentTags = binding.searchInput.text?.toString()?.trim().orEmpty().ifBlank { "order:id_desc" }
+                currentPage = 1
+                loadPosts()
+            }
+            "favorites", "history" -> {
+                binding.heroCard.isVisible = false
+                applyAllFiltersAndRender()
+            }
+            else -> renderHomeState()
         }
+    }
 
-        currentPage = 1
-        loadPosts()
+    private fun renderHomeState(message: String = "Пока здесь пусто — напишите запрос в поиск, откройте ссылку e621 или выберите быстрый режим ниже.") {
+        selectedTab = "home"
+        allPosts = emptyList()
+        adapter.submitList(emptyList())
+        binding.progress.isVisible = false
+        binding.heroCard.isVisible = true
+        binding.heroSubtitle.text = message
+        binding.emptyView.isVisible = true
+        binding.emptyView.text = "Домашняя страница пуста. Напишите что-нибудь в поиск."
+        binding.pageLabel.text = "—"
+    }
+
+    private fun updateConnectivityBanner() {
+        val online = NetworkUtils.isOnline(this)
+        binding.offlineBanner.isVisible = !online
     }
 
     private fun loadPosts() {
+        if (selectedTab == "home") selectedTab = "popular"
+        binding.heroCard.isVisible = false
+        updateConnectivityBanner()
+        if (!NetworkUtils.isOnline(this)) {
+            binding.progress.isVisible = false
+            binding.emptyView.isVisible = true
+            binding.emptyView.text = "Нет интернета. Подключитесь к интернету и попробуйте снова."
+            return
+        }
+
         binding.progress.isVisible = true
+        binding.emptyView.isVisible = false
         binding.pageLabel.text = currentPage.toString()
 
-        val tags = currentTags
+        val tags = currentTags.ifBlank {
+            when (selectedTab) {
+                "new" -> "order:id_desc"
+                else -> "order:score"
+            }
+        }
+        currentTags = tags
+        binding.headerSubtitle.text = if (tags.startsWith("order:")) "Лента: $selectedTab" else "Запрос: $tags"
+
         networkExecutor.execute {
             runCatching { e621Client.loadPosts(tags, currentPage) }
                 .onSuccess { posts -> runOnUiThread { refreshDerivedViews(posts) } }
@@ -200,6 +329,7 @@ class MainActivity : AppCompatActivity() {
         filterTagList(binding.sidebarSearch.text?.toString().orEmpty())
 
         adapter.setFavorites(localStore.favorites())
+        binding.heroCard.isVisible = false
         applyAllFiltersAndRender()
     }
 
@@ -226,13 +356,22 @@ class MainActivity : AppCompatActivity() {
                 list.filter { fav.contains(it.id) }
             }
             "history" -> {
-                val h = localStore.history().toSet()
-                list.filter { h.contains(it.id) }
+                val historyOrder = localStore.history()
+                val historySet = historyOrder.toSet()
+                list.filter { historySet.contains(it.id) }
+                    .sortedBy { historyOrder.indexOf(it.id).takeIf { idx -> idx >= 0 } ?: Int.MAX_VALUE }
             }
             else -> list
         }
 
         binding.emptyView.isVisible = list.isEmpty()
+        if (list.isEmpty()) {
+            binding.emptyView.text = when (selectedTab) {
+                "favorites" -> "В избранном пока пусто."
+                "history" -> "История пока пустая."
+                else -> "Ничего не найдено. Попробуйте другой запрос."
+            }
+        }
         adapter.submitList(list)
     }
 
@@ -271,6 +410,10 @@ class MainActivity : AppCompatActivity() {
         binding.mainRoot.setBackgroundColor(mainBg)
         binding.sidebarRoot.setBackgroundColor(drawerBg)
 
+        binding.headerTitle.setTextColor(textPrimary)
+        binding.headerSubtitle.setTextColor(textSecondary)
+        binding.heroTitle.setTextColor(textPrimary)
+        binding.heroSubtitle.setTextColor(textSecondary)
         binding.searchInput.setTextColor(textPrimary)
         binding.searchInput.setHintTextColor(textSecondary)
         binding.sidebarSearch.setTextColor(textPrimary)
@@ -282,6 +425,10 @@ class MainActivity : AppCompatActivity() {
         binding.searchButton.setBackgroundColor(accent)
         binding.prevPageBtn.setBackgroundColor(accent)
         binding.nextPageBtn.setBackgroundColor(accent)
+        binding.retryConnectionBtn.setBackgroundColor(accent)
+        binding.quickPopularBtn.setBackgroundColor(accent)
+        binding.quickNewBtn.setBackgroundColor(accent)
+        binding.quickFavoritesBtn.setBackgroundColor(accent)
 
         binding.menuPopular.setTextColor(textPrimary)
         binding.menuNew.setTextColor(textPrimary)
