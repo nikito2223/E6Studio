@@ -10,6 +10,7 @@ import coil.load
 import com.e6studio.android.R
 import com.e6studio.android.databinding.ItemPostBinding
 import com.e6studio.android.model.PostItem
+import com.e6studio.android.util.ThemePalette
 
 class PostAdapter(
     private val onClick: (PostItem) -> Unit,
@@ -50,19 +51,23 @@ class PostAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: PostItem, isFavorite: Boolean, theme: String) {
-            val textPrimary = if (theme == "light") Color.parseColor("#0B1B26") else Color.parseColor("#F5FBFF")
-            val textSecondary = if (theme == "light") Color.parseColor("#334E63") else Color.parseColor("#B6CBDB")
+            val palette = ThemePalette.from(theme)
             val accent = when (item.rating.lowercase()) {
                 "s" -> "#42D392"
                 "q" -> "#FFB74D"
                 else -> "#FF6B7A"
             }
 
-            binding.title.setTextColor(textPrimary)
-            binding.tags.setTextColor(textSecondary)
-            binding.typeBadge.setTextColor(textPrimary)
-            binding.ratingBadge.setTextColor(textPrimary)
+            binding.root.background?.setTint(palette.surfaceAlt)
+            binding.title.setTextColor(palette.textPrimary)
+            binding.tags.setTextColor(palette.textSecondary)
+            binding.typeBadge.setTextColor(palette.textPrimary)
+            binding.ratingBadge.setTextColor(palette.textPrimary)
+            binding.typeBadge.background?.setTint(palette.surface)
+            binding.ratingBadge.background?.setTint(palette.surface)
             binding.metaText.setTextColor(Color.parseColor(accent))
+            binding.favoriteBtn.setBackgroundColor(palette.accent)
+            binding.favoriteBtn.setTextColor(palette.accentText)
 
             val badge = when {
                 item.isVideo -> "VIDEO"

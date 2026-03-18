@@ -169,8 +169,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleIntent(intent: Intent?, initial: Boolean) {
+        val sharedText = intent?.getStringExtra(Intent.EXTRA_TEXT).orEmpty()
+        if (sharedText.startsWith("http://") || sharedText.startsWith("https://")) {
+            openDeepLink(Uri.parse(sharedText.trim()))
+            return
+        }
+
         val data = intent?.data
-        if (data != null && data.host?.contains("e621.net") == true) {
+        if (data != null && listOf("e621.net", "www.e621.net", "e926.net", "www.e926.net").contains(data.host)) {
             openDeepLink(data)
             return
         }

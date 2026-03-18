@@ -14,8 +14,12 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import android.widget.Button
+import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -31,6 +35,7 @@ import com.e6studio.android.model.PostItem
 import com.e6studio.android.storage.LocalStore
 import com.e6studio.android.util.DownloadNotifier
 import com.e6studio.android.util.NetworkUtils
+import com.e6studio.android.util.ThemePalette
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
@@ -66,6 +71,7 @@ class ViewerActivity : AppCompatActivity() {
         setContentView(binding.root)
         localStore = LocalStore(this)
         DownloadNotifier.ensureChannel(this)
+        applyThemeUi(localStore.theme())
 
         post = intent.getSerializableExtra("post") as? PostItem
         val item = post ?: run {
@@ -93,6 +99,50 @@ class ViewerActivity : AppCompatActivity() {
         binding.qualityBtn.setOnClickListener { showQualityPicker(item) }
         binding.unlockEmergencyBtn.setOnClickListener { tryUnlockEmergencyMode() }
         binding.exitEmergencyBtn.setOnClickListener { finishAffinity() }
+    }
+
+
+    private fun applyThemeUi(theme: String) {
+        val palette = ThemePalette.from(theme)
+        binding.viewerRoot.setBackgroundColor(palette.mainBg)
+        binding.contentRoot.setBackgroundColor(palette.mainBg)
+        binding.mediaFrame.background?.setTint(palette.surface)
+        binding.infoPanel.background?.setTint(palette.surface)
+        binding.downloadStatusRow.background?.setTint(palette.surfaceAlt)
+        binding.emergencyOverlay.background?.setTint(palette.mainBg)
+
+        listOf(
+            binding.closeBtn,
+            binding.panicBtn,
+            binding.downloadBtn,
+            binding.qualityBtn,
+            binding.soundBtn,
+            binding.fullscreenBtn,
+            binding.favoriteBtn,
+            binding.unlockEmergencyBtn,
+            binding.exitEmergencyBtn
+        ).forEach { button ->
+            button.setBackgroundColor(palette.accent)
+            button.setTextColor(palette.accentText)
+        }
+
+        tintTextTree(binding.contentRoot, palette)
+        binding.emergencyPasswordInput.background?.setTint(palette.surfaceAlt)
+        binding.emergencyPasswordInput.setTextColor(palette.textPrimary)
+        binding.emergencyPasswordInput.setHintTextColor(palette.textSecondary)
+    }
+
+    private fun tintTextTree(view: View, palette: ThemePalette) {
+        when (view) {
+            is TextView -> if (view !is Button && view !is EditText) view.setTextColor(palette.textPrimary)
+            is EditText -> {
+                view.setTextColor(palette.textPrimary)
+                view.setHintTextColor(palette.textSecondary)
+            }
+        }
+        if (view is ViewGroup) {
+            for (i in 0 until view.childCount) tintTextTree(view.getChildAt(i), palette)
+        }
     }
 
     private fun bindInfo(item: PostItem) {
