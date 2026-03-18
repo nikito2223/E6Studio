@@ -32,9 +32,6 @@
             android:name=".ui.SettingsActivity"
             android:exported="false" />
 
-        <activity
-            android:name=".ui.PluginsActivity"
-            android:exported="false" />
 
         <activity
             android:name=".ui.MainActivity"

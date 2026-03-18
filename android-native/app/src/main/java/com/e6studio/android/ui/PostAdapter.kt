@@ -50,27 +50,36 @@ class PostAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: PostItem, isFavorite: Boolean, theme: String) {
-            val textPrimary = if (theme == "light") Color.parseColor("#0B1B26") else Color.parseColor("#E8F1F7")
-            val textSecondary = if (theme == "light") Color.parseColor("#334E63") else Color.parseColor("#B9C8D3")
-            val cardBg = when (theme) {
-                "light" -> Color.parseColor("#FFFFFF")
-                "blue" -> Color.parseColor("#12385D")
-                "red" -> Color.parseColor("#2F1118")
-                else -> Color.parseColor("#0F1D2B")
+            val textPrimary = if (theme == "light") Color.parseColor("#0B1B26") else Color.parseColor("#F5FBFF")
+            val textSecondary = if (theme == "light") Color.parseColor("#334E63") else Color.parseColor("#B6CBDB")
+            val accent = when (item.rating.lowercase()) {
+                "s" -> "#42D392"
+                "q" -> "#FFB74D"
+                else -> "#FF6B7A"
             }
 
-            binding.root.setBackgroundColor(cardBg)
             binding.title.setTextColor(textPrimary)
             binding.tags.setTextColor(textSecondary)
             binding.typeBadge.setTextColor(textPrimary)
+            binding.ratingBadge.setTextColor(textPrimary)
+            binding.metaText.setTextColor(Color.parseColor(accent))
 
             val badge = when {
                 item.isVideo -> "VIDEO"
                 item.isGif -> "GIF"
-                else -> "IMG"
+                else -> "PHOTO"
             }
+            val ratingLabel = when (item.rating.lowercase()) {
+                "s" -> "SAFE"
+                "q" -> "QUESTIONABLE"
+                "e" -> "EXPLICIT"
+                else -> item.rating.uppercase()
+            }
+
             binding.typeBadge.text = badge
-            binding.title.text = "#${item.id} • ${item.rating.uppercase()} • ❤ ${item.score}"
+            binding.ratingBadge.text = ratingLabel
+            binding.title.text = "Пост #${item.id}"
+            binding.metaText.text = "❤ ${item.score} • ${item.displayResolution}"
             binding.tags.text = item.tagsText.ifBlank { binding.root.context.getString(R.string.no_tags) }
             binding.favoriteBtn.text = if (isFavorite) "★" else "☆"
             binding.preview.load(item.previewUrl.ifBlank { item.sampleUrl.ifBlank { item.fileUrl } }) {

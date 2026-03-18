@@ -1,10 +1,11 @@
 package com.e6studio.android.ui
 
 import android.Manifest
-import android.app.AlertDialog
 import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.RenderEffect
+import android.graphics.Shader
 import android.media.MediaPlayer
 import android.media.MediaScannerConnection
 import android.net.Uri
@@ -12,12 +13,9 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
-import android.text.InputType
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
-import android.widget.EditText
-import android.widget.MediaController
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -49,6 +47,7 @@ class ViewerActivity : AppCompatActivity() {
     private var currentMediaPlayer: MediaPlayer? = null
     private var isMuted = false
     private var isFullscreen = false
+    private var isEmergencyMode = false
     private var imageQuality = ImageQuality.ORIGINAL
     private var videoQuality = VideoQuality.ORIGINAL
 
@@ -87,11 +86,13 @@ class ViewerActivity : AppCompatActivity() {
         }
 
         binding.downloadBtn.setOnClickListener { checkStoragePermissionAndSave(item) }
-        binding.panicBtn.setOnClickListener { showEmergencyLock() }
+        binding.panicBtn.setOnClickListener { enterEmergencyMode() }
         binding.closeBtn.setOnClickListener { finish() }
         binding.soundBtn.setOnClickListener { toggleMute() }
         binding.fullscreenBtn.setOnClickListener { toggleFullscreen() }
         binding.qualityBtn.setOnClickListener { showQualityPicker(item) }
+        binding.unlockEmergencyBtn.setOnClickListener { tryUnlockEmergencyMode() }
+        binding.exitEmergencyBtn.setOnClickListener { finishAffinity() }
     }
 
     private fun bindInfo(item: PostItem) {
@@ -127,7 +128,7 @@ class ViewerActivity : AppCompatActivity() {
         binding.fullscreenBtn.visibility = View.VISIBLE
         binding.downloadStatusText.text = "Видео: ${videoQuality.title} · ${item.fileExt.uppercase()}"
 
-        val mediaController = MediaController(this)
+        val mediaController = android.widget.MediaController(this)
         mediaController.setAnchorView(binding.viewerVideo)
         binding.viewerVideo.setMediaController(mediaController)
         binding.viewerVideo.setVideoURI(Uri.parse(source))
@@ -135,7 +136,7 @@ class ViewerActivity : AppCompatActivity() {
             currentMediaPlayer = it
             it.isLooping = true
             applyMuteState()
-            binding.viewerVideo.start()
+            if (!isEmergencyMode) binding.viewerVideo.start()
         }
     }
 
@@ -241,10 +242,7 @@ class ViewerActivity : AppCompatActivity() {
         albumName: String,
         input: java.io.InputStream
     ): SavedResult {
-        val collection = when {
-            item.isVideo -> MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-            else -> MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-        }
+        val collection = if (item.isVideo) MediaStore.Video.Media.EXTERNAL_CONTENT_URI else MediaStore.Images.Media.EXTERNAL_CONTENT_URI
         val mimeType = when {
             item.isVideo -> if (item.fileExt.equals("webm", true)) "video/webm" else "video/mp4"
             item.isGif -> "image/gif"
@@ -269,7 +267,7 @@ class ViewerActivity : AppCompatActivity() {
         val openIntent = Intent(Intent.ACTION_VIEW)
             .setDataAndType(uri, mimeType)
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-        return SavedResult(uri.toString(), openIntent)
+        return SavedResult(openIntent)
     }
 
     private fun saveLegacy(
@@ -289,7 +287,7 @@ class ViewerActivity : AppCompatActivity() {
         val openIntent = Intent(Intent.ACTION_VIEW)
             .setDataAndType(uri, mimeType)
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-        return SavedResult(target.absolutePath, openIntent)
+        return SavedResult(openIntent)
     }
 
     private fun updateDownloadUiError(message: String) {
@@ -306,7 +304,7 @@ class ViewerActivity : AppCompatActivity() {
         } else {
             arrayOf(ImageQuality.ORIGINAL.title, ImageQuality.PREVIEW.title)
         }
-        AlertDialog.Builder(this)
+        androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle("Качество")
             .setItems(options) { _, which ->
                 if (item.isVideo) {
@@ -344,6 +342,7 @@ class ViewerActivity : AppCompatActivity() {
     }
 
     private fun toggleFullscreen() {
+        if (isEmergencyMode) return
         isFullscreen = !isFullscreen
         updateFullscreenUi()
     }
@@ -377,40 +376,39 @@ class ViewerActivity : AppCompatActivity() {
         }
     }
 
-    private fun showEmergencyLock() {
+    private fun enterEmergencyMode() {
         val password = localStore.appPassword()
         if (password.isBlank()) {
             Toast.makeText(this, "Сначала задайте пароль в настройках", Toast.LENGTH_LONG).show()
             return
         }
-
+        isEmergencyMode = true
         if (binding.viewerVideo.visibility == View.VISIBLE) binding.viewerVideo.pause()
-        val input = EditText(this)
-        input.hint = "Введите пароль"
-        input.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+        binding.emergencyPasswordInput.setText("")
+        binding.emergencyOverlay.visibility = View.VISIBLE
+        applyEmergencyBlur(enabled = true)
+    }
 
-        val dialog = AlertDialog.Builder(this)
-            .setTitle("Аварийная блокировка")
-            .setMessage("Введите пароль для возврата")
-            .setCancelable(false)
-            .setView(input)
-            .setPositiveButton("Разблокировать", null)
-            .setNegativeButton("Закрыть приложение") { _, _ -> finishAffinity() }
-            .create()
-
-        dialog.setOnShowListener {
-            val positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-            positive.setOnClickListener {
-                val entered = input.text?.toString().orEmpty()
-                if (entered == password) {
-                    dialog.dismiss()
-                    if (post?.isVideo == true) binding.viewerVideo.start()
-                } else {
-                    input.error = "Неверный пароль"
-                }
-            }
+    private fun tryUnlockEmergencyMode() {
+        val entered = binding.emergencyPasswordInput.text?.toString().orEmpty()
+        if (entered != localStore.appPassword()) {
+            binding.emergencyPasswordInput.error = "Неверный пароль"
+            return
         }
-        dialog.show()
+        isEmergencyMode = false
+        binding.emergencyOverlay.visibility = View.GONE
+        applyEmergencyBlur(enabled = false)
+        if (post?.isVideo == true) binding.viewerVideo.start()
+    }
+
+    private fun applyEmergencyBlur(enabled: Boolean) {
+        val alpha = if (enabled) 0.35f else 1f
+        binding.contentRoot.alpha = alpha
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            binding.contentRoot.setRenderEffect(
+                if (enabled) RenderEffect.createBlurEffect(24f, 24f, Shader.TileMode.CLAMP) else null
+            )
+        }
     }
 
     private fun renderFav(enabled: Boolean) {
@@ -424,10 +422,7 @@ class ViewerActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    private data class SavedResult(
-        val pathOrUri: String,
-        val openIntent: Intent?
-    )
+    private data class SavedResult(val openIntent: Intent?)
 
     private enum class ImageQuality(val title: String) {
         ORIGINAL("Оригинал"),
