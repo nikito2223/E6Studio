@@ -34,7 +34,6 @@ import coil.ImageLoader
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import coil.load
-import coil.network.okhttp.okHttpClient
 import com.e6studio.android.R
 import com.e6studio.android.databinding.ActivityViewerBinding
 import com.e6studio.android.model.PostItem
@@ -66,7 +65,6 @@ class ViewerActivity : AppCompatActivity() {
         .build()
     private val imageLoader by lazy {
         ImageLoader.Builder(this)
-            .okHttpClient(httpClient)
             .allowHardware(false)
             .components {
                 add(ImageDecoderDecoder.Factory())
