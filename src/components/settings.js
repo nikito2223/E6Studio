@@ -1,6 +1,23 @@
-import { checkForUpdates } from "../plugins/updateChecker.js";
-import { filterGallery } from './gallery.js'; // путь поправь под свой
-import { applyTranslations, initLanguageSwitcher, translations } from './localization/i18n.js';
+import { filterGallery } from './gallery.js';
+
+const applyTranslations = () => {};
+const initLanguageSwitcher = () => {};
+const translations = {};
+
+const electronAPI = window.electronAPI || {
+  isPackaged: false,
+  checkForUpdates: () => {},
+  onUpdateInfo: () => {},
+  onUpdateError: () => {},
+  quitAndInstall: null
+};
+
+const appInfoFallback = window.appInfo?.get?.() || {
+  version: '2.4.0',
+  author: 'Rufik',
+  license: 'MIT',
+  name: 'E6 Studio'
+};
 
 const settings = [
   {
@@ -421,7 +438,7 @@ function initUpdate(container = document) {
   const statusText = updateStatus.querySelector('.status-text');
 
   // Эмуляция апдейта для дев режима
-  if (!window.electronAPI.isPackaged) { // проверка dev/production
+  if (!electronAPI.isPackaged) { // проверка dev/production
     const fakeUpdate = {
       version: "1.2.0-dev",
       changelog: [
@@ -438,10 +455,10 @@ function initUpdate(container = document) {
   checkBtn.addEventListener('click', () => {
     statusText.textContent = 'Проверяем обновления...';
     checkBtn.classList.add('loading');
-    window.electronAPI.checkForUpdates();
+    electronAPI.checkForUpdates();
   });
 
-  window.electronAPI.onUpdateInfo((info) => {
+  electronAPI.onUpdateInfo((info) => {
     checkBtn.classList.remove('loading');
 
     if (info.version === null) {
@@ -453,7 +470,7 @@ function initUpdate(container = document) {
     checkBtn.classList.remove('loading');
   });
 
-  window.electronAPI.onUpdateError((err) => {
+  electronAPI.onUpdateError((err) => {
     updateStatus.className = 'status-container error';
     statusText.textContent = `❌ Ошибка проверки обновлений: ${err}`;
     checkBtn.classList.remove('loading');
@@ -493,7 +510,7 @@ function showUpdateModal(info) {
   overlay.querySelector('#confirm-update').addEventListener('click', () => {
     overlay.remove();
     // безопасно вызываем quitAndInstall только если оно определено
-    if (window.electronAPI.quitAndInstall) window.electronAPI.quitAndInstall();
+    if (electronAPI.quitAndInstall) electronAPI.quitAndInstall();
   });
 
   const changelogEl = overlay.querySelector('#changelog-list');
@@ -522,7 +539,7 @@ function initViewModes() {
 }
 
 async function about() {
-    const infoApp = window.appInfo.get();
+    const infoApp = appInfoFallback;
     const info = await checkForUpdates();
     if (!info) return;
 
@@ -547,4 +564,33 @@ async function about() {
             changelogElement.appendChild(el);
         });
     }
+}
+
+async function checkForUpdates() {
+  try {
+    const owner = 'nikito2223';
+    const repo = 'E6Studio';
+    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`);
+    if (!response.ok) {
+      return {
+        version: appInfoFallback.version,
+        changelog: ['Не удалось получить обновления (API недоступен).']
+      };
+    }
+
+    const release = await response.json();
+    return {
+      version: release.tag_name || appInfoFallback.version,
+      changelog: (release.body || '')
+        .split('\n')
+        .map(line => line.trim())
+        .filter(Boolean)
+    };
+  } catch (err) {
+    console.error('Ошибка проверки обновлений:', err);
+    return {
+      version: appInfoFallback.version,
+      changelog: ['Ошибка сети при проверке обновлений.']
+    };
+  }
 }

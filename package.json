@@ -1,13 +1,17 @@
 {
   "name": "e6studio",
   "version": "2.4.0",
-  "description": "none",
-  "main": "main.js",
   "description": "",
+  "main": "main.js",
   "scripts": {
     "start": "electron .",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "android:sync": "npm run android:android8 && npx cap sync android",
+    "android:open": "npx cap open android",
+    "android:build": "npm run android:sync && npm run android:open",
+    "android:add": "npx cap add android",
+    "android:android8": "node scripts/set-android8-sdk.js"
   },
   "build": {
     "appId": "com.e6studio.app",
@@ -52,7 +56,10 @@
   "type": "commonjs",
   "devDependencies": {
     "electron": "^37.0.0",
-    "electron-builder": "^26.0.12"
+    "electron-builder": "^26.0.12",
+    "@capacitor/cli": "^6.1.2",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/android": "^6.1.2"
   },
   "dependencies": {
     "adm-zip": "^0.5.16",
