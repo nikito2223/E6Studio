@@ -11,8 +11,8 @@ android {
         applicationId = "com.e6studio.android"
         minSdk = 26
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = 4
+        versionName = "1.2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -51,4 +51,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("io.coil-kt:coil:2.7.0")
     implementation("io.coil-kt:coil-gif:2.7.0")
+    implementation("io.coil-kt:coil-network-okhttp:2.7.0")
+    implementation("androidx.media3:media3-exoplayer:1.4.1")
+    implementation("androidx.media3:media3-ui:1.4.1")
 }

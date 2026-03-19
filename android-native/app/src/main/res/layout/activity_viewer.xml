@@ -124,8 +124,8 @@
                 android:adjustViewBounds="true"
                 android:scaleType="fitCenter" />
 
-            <VideoView
-                android:id="@+id/viewerVideo"
+            <androidx.media3.ui.PlayerView
+                android:id="@+id/viewerPlayer"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:visibility="gone" />

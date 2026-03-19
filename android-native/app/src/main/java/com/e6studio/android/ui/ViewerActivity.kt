@@ -6,13 +6,11 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.RenderEffect
 import android.graphics.Shader
-import android.media.MediaPlayer
-import android.media.MediaScannerConnection
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.media.MediaScannerConnection
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
@@ -25,10 +23,18 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.exoplayer.ExoPlayer
 import coil.ImageLoader
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import coil.load
+import coil.network.okhttp.okHttpClient
 import com.e6studio.android.R
 import com.e6studio.android.databinding.ActivityViewerBinding
 import com.e6studio.android.model.PostItem
@@ -40,16 +46,35 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
 import java.io.FileOutputStream
+import java.io.InputStream
 import java.util.concurrent.Executors
 
+@UnstableApi
 class ViewerActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityViewerBinding
     private lateinit var localStore: LocalStore
     private var post: PostItem? = null
     private val downloadExecutor = Executors.newSingleThreadExecutor()
-    private val httpClient = OkHttpClient()
-    private var currentMediaPlayer: MediaPlayer? = null
+    private val httpClient = OkHttpClient.Builder()
+        .addInterceptor { chain ->
+            val request = chain.request().newBuilder()
+                .header("User-Agent", USER_AGENT)
+                .build()
+            chain.proceed(request)
+        }
+        .build()
+    private val imageLoader by lazy {
+        ImageLoader.Builder(this)
+            .okHttpClient(httpClient)
+            .allowHardware(false)
+            .components {
+                add(ImageDecoderDecoder.Factory())
+                add(GifDecoder.Factory())
+            }
+            .build()
+    }
+    private var player: ExoPlayer? = null
     private var isMuted = false
     private var isFullscreen = false
     private var isEmergencyMode = false
@@ -101,7 +126,6 @@ class ViewerActivity : AppCompatActivity() {
         binding.exitEmergencyBtn.setOnClickListener { finishAffinity() }
     }
 
-
     private fun applyThemeUi(theme: String) {
         val palette = ThemePalette.from(theme)
         binding.viewerRoot.setBackgroundColor(palette.mainBg)
@@ -110,6 +134,7 @@ class ViewerActivity : AppCompatActivity() {
         binding.infoPanel.background?.setTint(palette.surface)
         binding.downloadStatusRow.background?.setTint(palette.surfaceAlt)
         binding.emergencyOverlay.background?.setTint(palette.mainBg)
+        binding.viewerPlayer.setShutterBackgroundColor(palette.surface)
 
         listOf(
             binding.closeBtn,
@@ -152,47 +177,64 @@ class ViewerActivity : AppCompatActivity() {
     }
 
     private fun showMedia(item: PostItem) {
+        clearPlayer()
         when {
             item.isVideo -> showVideo(item, videoSource(item))
             item.isImage -> showImage(item, imageSource(item))
-            else -> {
-                binding.viewerVideo.visibility = View.GONE
-                binding.viewerImage.visibility = View.VISIBLE
-                binding.viewerImage.load(item.previewUrl) {
-                    placeholder(R.drawable.placeholder_bg)
-                    error(R.drawable.placeholder_bg)
-                }
-                binding.downloadStatusText.text = "Предпросмотр недоступен для ${item.fileExt.uppercase()}, но файл можно скачать"
-                binding.qualityBtn.visibility = View.GONE
-                binding.soundBtn.visibility = View.GONE
-                binding.fullscreenBtn.visibility = View.GONE
-            }
+            else -> showUnsupportedPreview(item)
         }
     }
 
     private fun showVideo(item: PostItem, source: String) {
         binding.viewerImage.visibility = View.GONE
-        binding.viewerVideo.visibility = View.VISIBLE
+        binding.viewerPlayer.visibility = View.VISIBLE
         binding.qualityBtn.visibility = View.VISIBLE
         binding.soundBtn.visibility = View.VISIBLE
         binding.fullscreenBtn.visibility = View.VISIBLE
         binding.downloadStatusText.text = "Видео: ${videoQuality.title} · ${item.fileExt.uppercase()}"
 
-        val mediaController = android.widget.MediaController(this)
-        mediaController.setAnchorView(binding.viewerVideo)
-        binding.viewerVideo.setMediaController(mediaController)
-        binding.viewerVideo.setVideoURI(Uri.parse(source))
-        binding.viewerVideo.setOnPreparedListener {
-            currentMediaPlayer = it
-            it.isLooping = true
-            applyMuteState()
-            if (!isEmergencyMode) binding.viewerVideo.start()
+        val mimeType = when {
+            item.fileExt.equals("webm", true) -> MimeTypes.VIDEO_WEBM
+            item.fileExt.equals("mp4", true) -> MimeTypes.VIDEO_MP4
+            else -> MimeTypes.APPLICATION_MP4
         }
+        val mediaItem = MediaItem.Builder()
+            .setUri(source)
+            .setMimeType(mimeType)
+            .build()
+        val player = ExoPlayer.Builder(this)
+            .setMediaSourceFactory(
+                androidx.media3.exoplayer.source.DefaultMediaSourceFactory(
+                    DefaultHttpDataSource.Factory()
+                        .setUserAgent(USER_AGENT)
+                        .setAllowCrossProtocolRedirects(true)
+                )
+            )
+            .build().also { exo ->
+                exo.repeatMode = Player.REPEAT_MODE_ONE
+                exo.setMediaItem(mediaItem)
+                exo.prepare()
+                exo.playWhenReady = !isEmergencyMode
+                exo.volume = if (isMuted) 0f else 1f
+                exo.addListener(object : Player.Listener {
+                    override fun onPlayerError(error: PlaybackException) {
+                        updateDownloadUiError("Видео не воспроизводится: ${error.errorCodeName}")
+                    }
+                })
+            }
+        this.player = player
+        binding.viewerPlayer.player = player
+        binding.viewerPlayer.setControllerShowTimeoutMs(2500)
+        binding.viewerPlayer.controllerAutoShow = true
+        binding.viewerPlayer.setShowNextButton(false)
+        binding.viewerPlayer.setShowPreviousButton(false)
+        binding.viewerPlayer.setShowSubtitleButton(false)
+        binding.viewerPlayer.setShowVrButton(false)
+        binding.viewerPlayer.setShowShuffleButton(false)
     }
 
     private fun showImage(item: PostItem, source: String) {
-        binding.viewerVideo.stopPlayback()
-        binding.viewerVideo.visibility = View.GONE
+        binding.viewerPlayer.visibility = View.GONE
         binding.viewerImage.visibility = View.VISIBLE
         binding.qualityBtn.visibility = View.VISIBLE
         binding.soundBtn.visibility = View.GONE
@@ -203,24 +245,30 @@ class ViewerActivity : AppCompatActivity() {
             "Изображение: ${imageQuality.title} · ${item.fileExt.uppercase()}"
         }
 
-        val imageLoader = ImageLoader.Builder(this)
-            .components {
-                add(ImageDecoderDecoder.Factory())
-                add(GifDecoder.Factory())
-            }
-            .build()
-
         binding.viewerImage.load(source, imageLoader) {
             placeholder(R.drawable.placeholder_bg)
             error(R.drawable.placeholder_bg)
+            crossfade(true)
+            allowHardware(false)
         }
+    }
+
+    private fun showUnsupportedPreview(item: PostItem) {
+        binding.viewerPlayer.visibility = View.GONE
+        binding.viewerImage.visibility = View.VISIBLE
+        binding.viewerImage.load(item.previewUrl, imageLoader) {
+            placeholder(R.drawable.placeholder_bg)
+            error(R.drawable.placeholder_bg)
+        }
+        binding.downloadStatusText.text = "Предпросмотр недоступен для ${item.fileExt.uppercase()}, но файл можно скачать"
+        binding.qualityBtn.visibility = View.GONE
+        binding.soundBtn.visibility = View.GONE
+        binding.fullscreenBtn.visibility = View.GONE
     }
 
     override fun onPause() {
         super.onPause()
-        if (::binding.isInitialized && binding.viewerVideo.visibility == View.VISIBLE) {
-            binding.viewerVideo.pause()
-        }
+        player?.pause()
     }
 
     private fun checkStoragePermissionAndSave(item: PostItem) {
@@ -238,6 +286,12 @@ class ViewerActivity : AppCompatActivity() {
     }
 
     private fun saveToGallery(item: PostItem) {
+        val fileUrl = downloadSource(item)
+        if (fileUrl.isBlank()) {
+            updateDownloadUiError("Для этого медиа нет прямой ссылки на скачивание")
+            return
+        }
+
         val fileName = "e6_${item.id}.${item.fileExt.ifBlank { if (item.isVideo) "mp4" else "jpg" }}"
         val notificationId = item.id.toInt()
         val relativeDir = Environment.DIRECTORY_PICTURES
@@ -252,14 +306,16 @@ class ViewerActivity : AppCompatActivity() {
 
         downloadExecutor.execute {
             runCatching {
-                val request = Request.Builder().url(item.fileUrl).build()
+                val request = Request.Builder().url(fileUrl).header("User-Agent", USER_AGENT).build()
                 httpClient.newCall(request).execute().use { response ->
                     if (!response.isSuccessful) error("HTTP ${response.code}")
                     val body = response.body ?: error("Пустой ответ")
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        saveViaMediaStore(item, fileName, relativeDir, albumName, body.byteStream())
-                    } else {
-                        saveLegacy(item, fileName, relativeDir, albumName, body.byteStream())
+                    body.byteStream().use { stream ->
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            saveViaMediaStore(item, fileName, relativeDir, albumName, stream)
+                        } else {
+                            saveLegacy(item, fileName, relativeDir, albumName, stream)
+                        }
                     }
                 }
             }.onSuccess { saved ->
@@ -290,16 +346,10 @@ class ViewerActivity : AppCompatActivity() {
         fileName: String,
         relativeDir: String,
         albumName: String,
-        input: java.io.InputStream
+        input: InputStream
     ): SavedResult {
         val collection = if (item.isVideo) MediaStore.Video.Media.EXTERNAL_CONTENT_URI else MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-        val mimeType = when {
-            item.isVideo -> if (item.fileExt.equals("webm", true)) "video/webm" else "video/mp4"
-            item.isGif -> "image/gif"
-            item.fileExt.equals("png", true) -> "image/png"
-            item.fileExt.equals("webp", true) -> "image/webp"
-            else -> "image/jpeg"
-        }
+        val mimeType = item.mimeType
         val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
             put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
@@ -325,17 +375,16 @@ class ViewerActivity : AppCompatActivity() {
         fileName: String,
         relativeDir: String,
         albumName: String,
-        input: java.io.InputStream
+        input: InputStream
     ): SavedResult {
         val baseDir = Environment.getExternalStoragePublicDirectory(relativeDir)
         val targetDir = File(baseDir, albumName).apply { mkdirs() }
         val target = File(targetDir, fileName)
         FileOutputStream(target).use { output -> input.copyTo(output) }
-        MediaScannerConnection.scanFile(this, arrayOf(target.absolutePath), null, null)
+        MediaScannerConnection.scanFile(this, arrayOf(target.absolutePath), arrayOf(item.mimeType), null)
         val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", target)
-        val mimeType = if (item.isVideo) "video/*" else "image/*"
         val openIntent = Intent(Intent.ACTION_VIEW)
-            .setDataAndType(uri, mimeType)
+            .setDataAndType(uri, item.openMimeType)
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
         return SavedResult(openIntent)
     }
@@ -373,8 +422,14 @@ class ViewerActivity : AppCompatActivity() {
     }
 
     private fun videoSource(item: PostItem): String = when (videoQuality) {
-        VideoQuality.ORIGINAL -> item.fileUrl
-        VideoQuality.PREVIEW -> item.sampleUrl.ifBlank { item.previewUrl.ifBlank { item.fileUrl } }
+        VideoQuality.ORIGINAL -> item.fileUrl.ifBlank { item.sampleUrl.ifBlank { item.previewUrl } }
+        VideoQuality.PREVIEW -> item.sampleUrl.ifBlank { item.fileUrl.ifBlank { item.previewUrl } }
+    }
+
+    private fun downloadSource(item: PostItem): String = when {
+        item.fileUrl.isNotBlank() -> item.fileUrl
+        item.sampleUrl.isNotBlank() -> item.sampleUrl
+        else -> item.previewUrl
     }
 
     private fun toggleMute() {
@@ -384,7 +439,7 @@ class ViewerActivity : AppCompatActivity() {
     }
 
     private fun applyMuteState() {
-        currentMediaPlayer?.setVolume(if (isMuted) 0f else 1f, if (isMuted) 0f else 1f)
+        player?.volume = if (isMuted) 0f else 1f
     }
 
     private fun updateSoundButton() {
@@ -404,6 +459,7 @@ class ViewerActivity : AppCompatActivity() {
         binding.infoPanel.visibility = if (isFullscreen) View.GONE else View.VISIBLE
         binding.favoriteBtn.visibility = if (isFullscreen) View.GONE else View.VISIBLE
         binding.fullscreenBtn.text = if (isFullscreen) "⤢ Выход" else "⛶ Full"
+        binding.viewerPlayer.useController = post?.isVideo == true
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             window.insetsController?.let { controller ->
@@ -433,7 +489,7 @@ class ViewerActivity : AppCompatActivity() {
             return
         }
         isEmergencyMode = true
-        if (binding.viewerVideo.visibility == View.VISIBLE) binding.viewerVideo.pause()
+        player?.pause()
         binding.emergencyPasswordInput.setText("")
         binding.emergencyOverlay.visibility = View.VISIBLE
         applyEmergencyBlur(enabled = true)
@@ -448,7 +504,7 @@ class ViewerActivity : AppCompatActivity() {
         isEmergencyMode = false
         binding.emergencyOverlay.visibility = View.GONE
         applyEmergencyBlur(enabled = false)
-        if (post?.isVideo == true) binding.viewerVideo.start()
+        if (post?.isVideo == true) player?.play()
     }
 
     private fun applyEmergencyBlur(enabled: Boolean) {
@@ -465,11 +521,21 @@ class ViewerActivity : AppCompatActivity() {
         binding.favoriteBtn.text = if (enabled) "★ Избранное" else "☆ В избранное"
     }
 
+    override fun onStart() {
+        super.onStart()
+        if (!isEmergencyMode && post?.isVideo == true) player?.playWhenReady = true
+    }
+
     override fun onDestroy() {
-        currentMediaPlayer = null
-        binding.viewerVideo.stopPlayback()
+        clearPlayer()
         downloadExecutor.shutdownNow()
         super.onDestroy()
+    }
+
+    private fun clearPlayer() {
+        binding.viewerPlayer.player = null
+        player?.release()
+        player = null
     }
 
     private data class SavedResult(val openIntent: Intent?)
@@ -482,5 +548,9 @@ class ViewerActivity : AppCompatActivity() {
     private enum class VideoQuality(val title: String) {
         ORIGINAL("Оригинал"),
         PREVIEW("Быстрый preview")
+    }
+
+    private companion object {
+        const val USER_AGENT = "E6Studio/1.2.1 (by rufik on e621)"
     }
 }
